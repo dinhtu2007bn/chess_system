@@ -13,6 +13,6 @@ echo ================================================================
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8888 ^| findstr LISTENING') do taskkill /f /t /pid %%a >nul 2>&1
 
 start "" "http://127.0.0.1:8888"
-".venv\Scripts\python.exe" -m uvicorn app.server:app --host 127.0.0.1 --port 8888
+".venv\Scripts\python.exe" -m uvicorn app.server:app --host 0.0.0.0 --port 8888
 
 pause
