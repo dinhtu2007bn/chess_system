@@ -1,0 +1,76 @@
+{
+  "bots": [
+    {
+      "id": "bot_V0",
+      "name": "Bot V0",
+      "dir_name": "bot_V0",
+      "created_at": "2026-10-14T23:52:00Z",
+      "is_default": false,
+      "description": "Bot V0 - Phiên bản thử nghiệm với Fast Timer."
+    },
+    {
+      "id": "bot_V1",
+      "name": "Bot V1",
+      "dir_name": "bot_V1",
+      "created_at": "2026-10-14T23:50:00Z",
+      "is_default": true,
+      "description": "Bot V1 - Phiên bản nâng cao với Alpha-Beta, Iterative Deepening, TT và Adaptive Time Manager."
+    },
+    {
+      "id": "bot_V2",
+      "name": "Bot V2",
+      "dir_name": "bot_V2",
+      "created_at": "2026-10-15T11:58:07Z",
+      "is_default": false,
+      "description": "Bot V2 - Phiên bản nâng cấp thuật toán tìm kiếm và đánh giá thế cờ."
+    },
+    {
+      "id": "bot_V3",
+      "name": "Bot V3",
+      "dir_name": "bot_V3",
+      "created_at": "2026-10-19T04:47:58Z",
+      "is_default": false,
+      "description": "Bot V3 - Phiên bản mới nhất tải lên bởi người dùng."
+    },
+    {
+      "id": "bot_V4",
+      "name": "Bot V4",
+      "dir_name": "bot_V4",
+      "created_at": "2026-10-19T07:56:20.856482+00:00",
+      "is_default": false,
+      "description": "sử dụng thêm king safty cải thiện timeout"
+    },
+    {
+      "id": "bot_v5",
+      "name": "Bot v5",
+      "dir_name": "bot_v5",
+      "created_at": "2026-10-19T11:07:34.197498+00:00",
+      "is_default": false,
+      "description": "tối ưu lại king safety và chia thời gian hợp lí"
+    },
+    {
+      "id": "bot_v6",
+      "name": "Bot V6 (Master)",
+      "dir_name": "bot_v6",
+      "created_at": "2026-10-20T12:20:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot V6 Master: Sức cờ tấn công V3 (44%+ WinRate), loại bỏ độc tố TT, mở rộng thời gian chiến thuật đỉnh 2.5-2.8s và bảo toàn 0% Timeout tuyệt đối."
+    },
+    {
+      "id": "bot_v7",
+      "name": "Bot V7 (V3 Pure + Anti-Timeout)",
+      "dir_name": "bot_v7",
+      "created_at": "2026-10-20T16:25:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot V7: Giữ nguyên 100% thuật toán tìm kiếm và đánh giá thuần túy của V3, chỉ khắc phục triệt để cơ chế ngắt thời gian (Adaptive Node Mask <30ms) và phân bổ cờ tàn để đạt 0% Timeout."
+    },
+    {
+      "id": "bot_s_n",
+      "name": "bot sơn",
+      "dir_name": "bot_s_n",
+      "created_at": "2026-10-21T10:33:48.056714+00:00",
+      "is_default": false,
+      "description": "Bot tải lên từ thư mục bởi người dùng lúc 17:33 21/10/2026"
+    }
+  ]
+}

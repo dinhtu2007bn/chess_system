@@ -1,0 +1,332 @@
+[
+  {
+    "id": "open-01",
+    "name": "Khai cuộc Chess960 #518",
+    "category": "opening",
+    "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1",
+    "chess960_id": 518,
+    "description": "Classic starting layout (Position 518). Standard development patterns and symmetrical center.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-02",
+    "name": "Khai cuộc Chess960 #0",
+    "category": "opening",
+    "fen": "bbqnnrkr/pppppppp/8/8/8/8/PPPPPPPP/BBQNNRKR w HFhf - 0 1",
+    "chess960_id": 0,
+    "description": "Double bishop corner layout (Position 0). Queens and knights inside, kings on g-file.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-03",
+    "name": "Khai cuộc Chess960 #100",
+    "category": "opening",
+    "fen": "qbbnrnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBNRNKR w HEhe - 0 1",
+    "chess960_id": 100,
+    "description": "Queen corner with adjacent bishops (Position 100). Asymmetric early diagonal pressure.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-04",
+    "name": "Khai cuộc Chess960 #250",
+    "category": "opening",
+    "fen": "nrkqbbnr/pppppppp/8/8/8/8/PPPPPPPP/NRKQBBNR w HBhb - 0 1",
+    "chess960_id": 250,
+    "description": "Knight and Rook flank setup (Position 250). Knights on outer files, king centrally placed.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-05",
+    "name": "Khai cuộc Chess960 #399",
+    "category": "opening",
+    "fen": "qrnnkrbb/pppppppp/8/8/8/8/PPPPPPPP/QRNNKRBB w FBfb - 0 1",
+    "chess960_id": 399,
+    "description": "Centralized King and Queens (Position 399). Rapid central clashes and early tactical skirmishes.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-06",
+    "name": "Khai cuộc Chess960 #480",
+    "category": "opening",
+    "fen": "bbqrnknr/pppppppp/8/8/8/8/PPPPPPPP/BBQRNKNR w HDhd - 0 1",
+    "chess960_id": 480,
+    "description": "Balanced tactical setup (Position 480). Open diagonals for fianchetto and rapid rook activation.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-07",
+    "name": "Khai cuộc Chess960 #620",
+    "category": "opening",
+    "fen": "rbnqkrbn/pppppppp/8/8/8/8/PPPPPPPP/RBNQKRBN w FAfa - 0 1",
+    "chess960_id": 620,
+    "description": "Bishops on opposite wings (Position 620). Long-range board control across both diagonals.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-08",
+    "name": "Khai cuộc Chess960 #750",
+    "category": "opening",
+    "fen": "rknnqbbr/pppppppp/8/8/8/8/PPPPPPPP/RKNNQBBR w HAha - 0 1",
+    "chess960_id": 750,
+    "description": "Asymmetrical king-side rook arrangement (Position 750). Sharp castling timing considerations.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-09",
+    "name": "Khai cuộc Chess960 #840",
+    "category": "opening",
+    "fen": "rbknbrqn/pppppppp/8/8/8/8/PPPPPPPP/RBKNBRQN w FAfa - 0 1",
+    "chess960_id": 840,
+    "description": "Queen and King reversed (Position 840). Unorthodox development orders required.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "open-10",
+    "name": "Khai cuộc Chess960 #959",
+    "category": "opening",
+    "fen": "rkrnnqbb/pppppppp/8/8/8/8/PPPPPPPP/RKRNNQBB w CAca - 0 1",
+    "chess960_id": 959,
+    "description": "Mirror inverted layout (Position 959). Extreme corner-heavy piece setup.",
+    "recommended_time_ms": 2000
+  },
+  {
+    "id": "mid-01",
+    "name": "Đột phá Trung tâm & Ghim Xe",
+    "category": "midgame",
+    "fen": "r2q1rk1/1ppb1ppp/p1np1n2/4p3/B2PP3/2N1PN2/PPP3PP/R2Q1RK1 w - - 0 10",
+    "description": "Thế cờ ghim chéo cánh vua, trung tâm d4 mở ra khả năng giằng co quân nặng, áp lực alpha-beta cao.",
+    "recommended_time_ms": 4000
+  },
+  {
+    "id": "mid-02",
+    "name": "Bẫy Hậu & Đòn Tấn công Cánh Vua",
+    "category": "midgame",
+    "fen": "r1b2rk1/pp1nqppp/2p1pn2/3p4/2PP4/2N1PN2/PPQ2PPP/2KR1B1R w - - 4 10",
+    "description": "Vua nhập thành khác phía trong Chess960, bão tốt cánh vua và đòn phản kích cánh hậu.",
+    "recommended_time_ms": 5000
+  },
+  {
+    "id": "mid-03",
+    "name": "Song Mã Khống chế & Bắt Tốt d5",
+    "category": "midgame",
+    "fen": "r1bqk2r/pp2ppbp/2np1np1/8/3NP3/2N1B3/PPP2PPP/2KR1B1R w ha - 2 9",
+    "description": "Hệ thống Sicilian Dragon biến thể 960 với Mã d4 chiếm lĩnh ô trung tâm, rủi ro timeout rất cao.",
+    "recommended_time_ms": 5000
+  },
+  {
+    "id": "mid-04",
+    "name": "Phế Tượng H7 Tấn công Thành Vua",
+    "category": "midgame",
+    "fen": "r1b2rk1/ppqn1ppp/2p1p3/3p4/2PP4/1PN1PN2/PB3PPP/R2QKB1R w HA - 0 10",
+    "description": "Đòn phế quân kinh điển kiểm tra khả năng nhìn sâu của nhánh Quiescence Search.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-05",
+    "name": "Chiến thuật Xiên Hậu - Xe Cột Mở",
+    "category": "midgame",
+    "fen": "2r2rk1/pp1b1ppp/1qn1pn2/3p4/3P4/bPN1PN2/P1QBBPPP/R4RK1 w - - 3 13",
+    "description": "Cột c nửa mở, quân nhẹ đan xen, tính toán đòn phát động bắt quân nặng phức tạp.",
+    "recommended_time_ms": 5000
+  },
+  {
+    "id": "mid-06",
+    "name": "Phối hợp Đôi Xe Hàng 7",
+    "category": "midgame",
+    "fen": "r4rk1/2pqbppp/p1n1p3/1p1p4/3P1B2/1BP1PN2/PP1n1PPP/R2Q1RK1 w - - 0 13",
+    "description": "Áp lực lên hàng 7, cấu trúc tốt dẹp, kiểm tra năng lực move ordering tránh nổ nhánh.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-07",
+    "name": "Khóa Cánh Vua & Mở Cột f",
+    "category": "midgame",
+    "fen": "r1b2r1k/pp2q1bp/2p3p1/4pp2/2P5/1PN1P1P1/PB1Q1PBP/3R1RK1 w - - 2 17",
+    "description": "Vua đen ở góc h8, cột f đang mở, áp lực đòi hỏi hàm lượng giá đánh giá đúng an toàn vua.",
+    "recommended_time_ms": 4000
+  },
+  {
+    "id": "mid-08",
+    "name": "Cờ Đôi Công Sắc Bén Cánh Hậu",
+    "category": "midgame",
+    "fen": "2kr3r/pp1n1pp1/2p1pn1p/q6P/2PP4/P2B1N2/1P1Q1PP1/1K1R3R b - - 2 17",
+    "description": "Hai bên đối mặt nguy cơ đổi Hậu hoặc tấn công dồn dập, thử thách tính toán độ sâu 6-8 ply.",
+    "recommended_time_ms": 5000
+  },
+  {
+    "id": "mid-09",
+    "name": "Chọc Thủng Cấu Trúc Tốt f7",
+    "category": "midgame",
+    "fen": "r1b1k2r/ppqn1pp1/2pbpn1p/8/3P3B/2NB1N2/PPP2PPP/R2Q1RK1 w ha - 2 11",
+    "description": "Đòn ép cánh vua đen chưa nhập thành, đánh giá thế cờ chênh lệch chiến thuật.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-10",
+    "name": "Bẫy Mã Trong Góc Cờ",
+    "category": "midgame",
+    "fen": "rn3rk1/pbppq1pp/1p2pn2/5p2/2PP4/2N1PN2/PPQ1BPPP/R3K2R w HA - 4 10",
+    "description": "Mã b8 và Tượng b7 đan chéo, cấu trúc phức tạp đòi hỏi Transposition Table ghi nhớ chuẩn.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-11",
+    "name": "Tấn Công Chiếu Bắt Đôi",
+    "category": "midgame",
+    "fen": "r2qk2r/pb1nbppp/1pp1pn2/3p4/2PP4/1PN1PN2/PB2BPPP/R2Q1RK1 w ha - 3 10",
+    "description": "Căng thẳng trung tâm, nhiều phương án ăn quân (captures) thử thách Quiescence Search.",
+    "recommended_time_ms": 4000
+  },
+  {
+    "id": "mid-12",
+    "name": "Ghim Mã d4 Với Tượng g7",
+    "category": "midgame",
+    "fen": "r2q1rk1/1pp1ppbp/p1np1np1/8/3NP1b1/2N1B3/PPP1BPPP/R2Q1RK1 w - - 2 10",
+    "description": "Nhiều biến ăn đổi liên hoàn trên d4 và e2, dễ gây timeout nếu không sắp xếp nước đi tối ưu.",
+    "recommended_time_ms": 5000
+  },
+  {
+    "id": "mid-13",
+    "name": "Cột e Mở Toang & Tranh Giành Ô e5",
+    "category": "midgame",
+    "fen": "r3r1k1/pp1nqppp/2p5/3pP3/3P4/2N2N2/PPP3PP/R2Q1RK1 b - - 0 12",
+    "description": "Chiến lược kiểm soát ô trọng yếu e5, kiểm chứng hàm đánh giá vị trí quân (PST).",
+    "recommended_time_ms": 4000
+  },
+  {
+    "id": "mid-14",
+    "name": "Song Tượng Bắn Tỉa Cánh Vua",
+    "category": "midgame",
+    "fen": "r2q1rk1/pb1nbppp/1p2pn2/2pp4/2PP4/1PN1PN2/PB2BPPP/R2Q1RK1 w - - 0 11",
+    "description": "Cặp tượng trắng b2 và d3 tạo thế gọng kìm, kiểm tra khả năng phòng thủ của bot.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-15",
+    "name": "Tốt Thông Cột d Đe Dọa Thăng Cấp",
+    "category": "midgame",
+    "fen": "3r1rk1/pp1q1ppp/4p3/3P4/1b6/2N1P3/PP3PPP/2RQK2R w H - 1 15",
+    "description": "Tốt d5 thông nguy hiểm, cần duyệt nhanh để đánh giá cơ hội thăng cấp hay phong tỏa.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-16",
+    "name": "Bão Tốt G4-H4 Tấn Công Vua",
+    "category": "midgame",
+    "fen": "r1b2rk1/pp2qppp/2n1pn2/2pp4/3P4/2PBPN2/PP1N1PPP/R2QK2R w HA - 0 9",
+    "description": "Trắng chuẩn bị đẩy g4-h4 nghiền nát cánh vua, áp lực thời gian cao.",
+    "recommended_time_ms": 5000
+  },
+  {
+    "id": "mid-17",
+    "name": "Đòn Phối Hợp Mã & Hậu Chiếu Bí",
+    "category": "midgame",
+    "fen": "r4rk1/1pp1qppp/p1np4/4p3/2BPP1b1/2P1PN2/PP1N1QPP/R4RK1 b - - 5 12",
+    "description": "Đen có cơ hội phản công tinh tế ở trung tâm, đòi hỏi bot không đi nước thụ động.",
+    "recommended_time_ms": 4000
+  },
+  {
+    "id": "mid-18",
+    "name": "Giao Tranh Quân Nặng Cột d",
+    "category": "midgame",
+    "fen": "3r1rk1/1pq2ppp/p1n1pn2/3p4/3P4/2NBPN2/PP3PPP/2RQ1RK1 w - - 2 13",
+    "description": "Cột d và c tranh chấp quyết liệt, phân bổ thời gian hợp lý tránh cạn giờ.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-19",
+    "name": "Phòng Ngự Phản Công Cánh Hậu",
+    "category": "midgame",
+    "fen": "1r3rk1/p1q1bppp/b1p1pn2/2pp4/2PP4/1PN1PN2/P2B1PPP/R2QR1K1 w - - 2 13",
+    "description": "Tượng a6 ghim mạnh vào cánh trắng, kiểm tra năng lực phòng thủ chủ động.",
+    "recommended_time_ms": 4500
+  },
+  {
+    "id": "mid-20",
+    "name": "Đòn Hy Sinh Phá Vỡ Cánh Vua",
+    "category": "midgame",
+    "fen": "r2q1rk1/1b1nbppp/p3pn2/1p1p4/3P4/1PNBPN2/PB3PPP/2RQ1RK1 w - - 2 12",
+    "description": "Bùng nổ chiến thuật đa hướng, thế cờ điển hình để test thuật toán time manager.",
+    "recommended_time_ms": 5000
+  },
+  {
+    "id": "end-01",
+    "name": "Tàn Cuộc Xe Lucena Chiếc Cầu Vàng",
+    "category": "endgame",
+    "fen": "1K6/1P1k4/8/8/8/8/r7/2R5 w - - 0 1",
+    "description": "Thế Lucena kinh điển: Trắng xây cầu xe để hộ tống tốt phong Hậu.",
+    "recommended_time_ms": 3000
+  },
+  {
+    "id": "end-02",
+    "name": "Tàn Cuộc Xe Philidor Cắt Hàng 6",
+    "category": "endgame",
+    "fen": "4k3/R7/8/4r3/8/8/4P3/4K3 b - - 0 1",
+    "description": "Thế Philidor phòng thủ cơ bản: Đen cắt xe hàng 6 chờ thời cơ chiếu sau.",
+    "recommended_time_ms": 3000
+  },
+  {
+    "id": "end-03",
+    "name": "Tàn Cuộc Vua Tốt - Thế Đối Vua (Opposition)",
+    "category": "endgame",
+    "fen": "8/8/4k3/8/4P3/4K3/8/8 w - - 0 1",
+    "description": "Kỹ thuật chiếm thế đối vua quyết định thắng/hòa trong 1 nước đi duy nhất.",
+    "recommended_time_ms": 2500
+  },
+  {
+    "id": "end-04",
+    "name": "Tàn Cuộc Tượng Khác Màu - Rào Cản Hòa",
+    "category": "endgame",
+    "fen": "8/5k2/8/2b2K2/8/2B5/4P3/8 w - - 0 1",
+    "description": "Tượng khác màu tạo thế bất khả chiến bại dù hơn tốt, kiểm tra hàm đánh giá tàn cuộc.",
+    "recommended_time_ms": 3000
+  },
+  {
+    "id": "end-05",
+    "name": "Tàn Cuộc Mã vs Tốt Thông Biên",
+    "category": "endgame",
+    "fen": "8/8/8/k7/8/8/1p6/1K1N4 w - - 0 1",
+    "description": "Mã trắng phải tính toán chính xác số bước nhảy để chặn tốt đen phong Hậu.",
+    "recommended_time_ms": 3000
+  },
+  {
+    "id": "end-06",
+    "name": "Tàn Cuộc Hậu vs Tốt Hàng 7",
+    "category": "endgame",
+    "fen": "8/8/8/8/4K3/8/1pk5/7Q w - - 0 1",
+    "description": "Hậu trắng liên tục chiếu ép vua đen chặn đường tốt để kéo vua trắng lại gần.",
+    "recommended_time_ms": 3500
+  },
+  {
+    "id": "end-07",
+    "name": "Tàn Cuộc Xe & Tốt Cột a vs Xe",
+    "category": "endgame",
+    "fen": "R7/8/8/8/pk6/8/8/1K6 w - - 0 1",
+    "description": "Xe trắng phòng ngự từ xa trước tốt a4 đang tiến nhanh, thử thách độ sâu duyệt.",
+    "recommended_time_ms": 3000
+  },
+  {
+    "id": "end-08",
+    "name": "Tàn Cuộc Đôi Xe Bắt Tốt Cột f",
+    "category": "endgame",
+    "fen": "5rk1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1",
+    "description": "Cân bằng tài nguyên nhưng cấu trúc tốt quyết định ai chiếm ưu thế hoạt động.",
+    "recommended_time_ms": 2500
+  },
+  {
+    "id": "end-09",
+    "name": "Tàn Cuộc Tượng Cùng Màu - Điểm Yếu Tốt",
+    "category": "endgame",
+    "fen": "8/4k3/4p1p1/3pP3/3P1B2/8/5K2/5b2 w - - 0 1",
+    "description": "Trận địa then chốt trên các ô màu đen/trắng, kiểm tra khả năng phát hiện điểm yếu.",
+    "recommended_time_ms": 3000
+  },
+  {
+    "id": "end-10",
+    "name": "Tàn Cuộc Vua Tốt Đua Phong Cấp",
+    "category": "endgame",
+    "fen": "8/p7/8/8/8/8/7P/k1K5 w - - 0 1",
+    "description": "Cuộc đua tính toán số nước bước của hai vua và hai tốt, đòi hỏi duyệt sâu tuyệt đối.",
+    "recommended_time_ms": 3500
+  }
+]

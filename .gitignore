@@ -1,0 +1,16 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+ui/node_modules/
+*.log
+engines/*.exe
+*.exe
+.uv_cache/
+.npm_cache/
+cloudflared.exe
