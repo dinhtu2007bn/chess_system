@@ -308,11 +308,13 @@ async def get_engine_status() -> dict[str, Any]:
 async def websocket_endpoint(socket: WebSocket) -> None:
     await socket.accept()
     connections.add(socket)
-    await socket.send_json(game.state())
     try:
+        await socket.send_json(game.state())
         while True:
             await socket.receive_text()
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
+        pass
+    finally:
         connections.discard(socket)
 
 
