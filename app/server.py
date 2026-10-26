@@ -15,7 +15,7 @@ if sys.platform == "win32":
 
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .benchmark_manager import ArenaRunner, BenchmarkRunner, load_positions
@@ -175,6 +175,21 @@ async def delete_bot(bot_id: str) -> dict[str, Any]:
         return {"success": True, "deleted_id": bot_id}
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/api/bots/{bot_id}/download")
+async def download_bot(bot_id: str) -> Response:
+    try:
+        buf, filename = bot_manager.export_bot_zip(bot_id)
+        return Response(
+            content=buf.getvalue(),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except (KeyError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 # ==================== POSITION SUITE API ====================

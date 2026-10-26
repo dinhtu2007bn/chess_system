@@ -156,7 +156,7 @@ export const BotManagerView: React.FC<Props> = ({
         <div>
           <h2>Quản lý & Thêm Bot Cờ Vua Chess960</h2>
           <p className="section-desc">
-            Nạp trực tiếp toàn bộ thư mục <code>student</code> từ máy tính, đổi tên phiên bản linh hoạt, và chạy độc lập trong tiến trình con.
+            Nạp trực tiếp thư mục <code>student</code> từ máy tính lên hệ thống, hoặc tải bot về máy dạng file ZIP để giải nén trực tiếp vào thư mục <code>student/</code> của bạn.
           </p>
         </div>
         <button
@@ -250,6 +250,15 @@ export const BotManagerView: React.FC<Props> = ({
                 </div>
 
                 <div className="bot-card-actions">
+                  <a
+                    href={`/api/bots/${bot.id}/download`}
+                    download
+                    className="btn-outline btn-sm"
+                    title="Tải trọn bộ code bot (ZIP) để copy thẳng vào thư mục student/"
+                    style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                  >
+                    📥 Tải Bot (ZIP)
+                  </a>
                   {onSelectForPlay && (
                     <button
                       className="btn-outline btn-sm"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import io
 import json
 import os
 from pathlib import Path
@@ -8,6 +9,7 @@ import re
 import shutil
 import sys
 import uuid
+import zipfile
 from typing import Any
 
 from chesslab_sdk import BotConfig, SearchContext
@@ -143,6 +145,31 @@ class BotManager:
                 except Exception:
                     pass
         return True
+
+    def export_bot_zip(self, bot_id: str) -> tuple[io.BytesIO, str]:
+        """Packages bot python files into a clean zip archive ready for extraction into student/."""
+        bot = self.get_bot(bot_id)
+        if not bot or not bot.get("dir_path"):
+            raise KeyError(f"Bot '{bot_id}' không tồn tại")
+        bot_dir = Path(bot["dir_path"])
+        if not bot_dir.is_dir():
+            raise FileNotFoundError(f"Thư mục của bot '{bot_id}' không tồn tại")
+
+        # Determine source dir (prefer student/ if it exists and has bot.py, else bot_dir)
+        source_dir = bot_dir / "student" if (bot_dir / "student" / "bot.py").is_file() else bot_dir
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for file_path in source_dir.rglob("*.py"):
+                if "__pycache__" in file_path.parts:
+                    continue
+                arcname = file_path.relative_to(source_dir)
+                zf.write(file_path, arcname=str(arcname))
+
+        buffer.seek(0)
+        bot_slug = re.sub(r"[^\w\-]", "_", bot.get("name", bot_id))
+        filename = f"{bot_slug}_student.zip"
+        return buffer, filename
 
     def validate_bot_directory(self, target_dir: Path) -> None:
         """Validates that target_dir has a valid bot.py implementing StudentBot."""
