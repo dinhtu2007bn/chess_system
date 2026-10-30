@@ -395,6 +395,10 @@ class BenchmarkRunner:
                 await self.broadcast_fn({"type": "benchmark_update", "session": session})
 
         except asyncio.CancelledError:
+            for w in workers:
+                if not w.done():
+                    w.cancel()
+            await asyncio.gather(*workers, return_exceptions=True)
             session["status"] = "stopped"
         except Exception as exc:
             import traceback
@@ -521,16 +525,9 @@ class BenchmarkRunner:
                         calc_ms = max(0, int((time.monotonic() - t0) * 1000))
                         delay_ms = max(0, 500 - calc_ms)
                         if delay_ms > 0:
-                            rem_now = clock.value(turn)
-                            sleep_ms = min(delay_ms, max(0, rem_now - 100))
-                            if sleep_ms > 0:
-                                await asyncio.sleep(sleep_ms / 1000.0)
+                            await asyncio.sleep(min(delay_ms, clock.value(turn)) / 1000.0)
 
                         elapsed_ms = clock.stop()
-                        if elapsed_ms < 500:
-                            shortfall = 500 - elapsed_ms
-                            clock.remaining[bot_color] = max(0, clock.remaining[bot_color] - shortfall)
-                            elapsed_ms = 500
                         bot_move_times.append(elapsed_ms)
 
                         # Check if bot exhausted clock
@@ -556,7 +553,6 @@ class BenchmarkRunner:
                         break
                 else:
                     # ================= OPPONENT TURN =================
-                    t0_opp = time.monotonic()
                     try:
                         # Stockfish thinks for reasonable slice of its remaining clock
                         opp_time_sec = max(0.1, min(2.5, curr_remaining / 1000.0 * 0.06))
@@ -578,20 +574,7 @@ class BenchmarkRunner:
                         else:
                             move = await fallback_opponent.choose_move(board, time_limit_seconds=opp_time_sec)
 
-                        # README Rule: Minimum 500ms per move applied to Stockfish / Opponent equally
-                        calc_opp_ms = max(0, int((time.monotonic() - t0_opp) * 1000))
-                        delay_opp_ms = max(0, 500 - calc_opp_ms)
-                        if delay_opp_ms > 0:
-                            rem_opp = clock.value(turn)
-                            sleep_opp_ms = min(delay_opp_ms, max(0, rem_opp - 100))
-                            if sleep_opp_ms > 0:
-                                await asyncio.sleep(sleep_opp_ms / 1000.0)
-
                         elapsed_ms = clock.stop()
-                        if elapsed_ms < 500:
-                            shortfall = 500 - elapsed_ms
-                            clock.remaining[not bot_color] = max(0, clock.remaining[not bot_color] - shortfall)
-                            elapsed_ms = 500
 
                         if clock.remaining[not bot_color] <= 0:
                             termination = "timeout"
@@ -1071,6 +1054,10 @@ class ArenaRunner:
                 await self.broadcast_fn({"type": "arena_update", "session": session})
 
         except asyncio.CancelledError:
+            for w in workers:
+                if not w.done():
+                    w.cancel()
+            await asyncio.gather(*workers, return_exceptions=True)
             session["status"] = "stopped"
         except Exception as exc:
             session["status"] = "error"
@@ -1229,15 +1216,9 @@ class ArenaRunner:
                     delay_ms = max(0, 500 - calc_ms)
                     if delay_ms > 0:
                         rem_curr = clock.value(turn)
-                        sleep_ms = min(delay_ms, max(0, rem_curr - 100))
-                        if sleep_ms > 0:
-                            await asyncio.sleep(sleep_ms / 1000.0)
+                        await asyncio.sleep(min(delay_ms, rem_curr) / 1000.0)
 
                     elapsed_ms = clock.stop()
-                    if elapsed_ms < 500:
-                        shortfall = 500 - elapsed_ms
-                        clock.remaining[turn] = max(0, clock.remaining[turn] - shortfall)
-                        elapsed_ms = 500
 
                     if clock.remaining[turn] <= 0:
                         termination = "timeout"

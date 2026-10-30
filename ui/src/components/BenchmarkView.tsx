@@ -92,6 +92,8 @@ export const BenchmarkView: React.FC<Props> = ({
   useEffect(() => {
     if (benchmarkLiveEvent) {
       const slotKey = String(benchmarkLiveEvent.slot_id ?? 0);
+
+      // Live Move Update
       setLiveBoards((prev) => ({
         ...prev,
         [slotKey]: {
@@ -127,22 +129,6 @@ export const BenchmarkView: React.FC<Props> = ({
       }
     }
   }, [benchmarkLiveEvent]);
-
-  // Real-time benchmark session updates via WebSocket
-  useEffect(() => {
-    if (benchmarkSessionEvent) {
-      setSession(benchmarkSessionEvent);
-      if (benchmarkSessionEvent.live_boards) {
-        setLiveBoards((prev) => ({
-          ...prev,
-          ...benchmarkSessionEvent.live_boards,
-        }));
-      }
-      if (benchmarkSessionEvent.live_board) {
-        setLiveBoard(benchmarkSessionEvent.live_board);
-      }
-    }
-  }, [benchmarkSessionEvent]);
 
   // Active game clock countdown ticker for all active slots
   useEffect(() => {
@@ -182,7 +168,26 @@ export const BenchmarkView: React.FC<Props> = ({
     return () => clearInterval(ticker);
   }, [session?.status]);
 
-  // Fallback Polling (1200ms) to ensure sync if WebSocket drops
+  // Real-time benchmark session updates via WebSocket (metrics, leaderboard, finished states)
+  useEffect(() => {
+    if (benchmarkSessionEvent) {
+      setSession(benchmarkSessionEvent);
+      // Only overwrite board states if session is NOT currently in live play
+      if (benchmarkSessionEvent.status !== "running") {
+        if (benchmarkSessionEvent.live_boards) {
+          setLiveBoards((prev) => ({
+            ...prev,
+            ...benchmarkSessionEvent.live_boards,
+          }));
+        }
+        if (benchmarkSessionEvent.live_board) {
+          setLiveBoard(benchmarkSessionEvent.live_board);
+        }
+      }
+    }
+  }, [benchmarkSessionEvent]);
+
+  // Fallback Polling (1500ms) to ensure sync if WebSocket drops
   useEffect(() => {
     let timer: any;
     const fetchStatus = async () => {
@@ -192,14 +197,17 @@ export const BenchmarkView: React.FC<Props> = ({
           const data = await res.json();
           if (data.session) {
             setSession(data.session);
-            if (data.session.live_boards) {
-              setLiveBoards((prev) => ({
-                ...prev,
-                ...data.session.live_boards,
-              }));
-            }
-            if (data.session.live_board && !benchmarkLiveEvent) {
-              setLiveBoard(data.session.live_board);
+            // Only overwrite board states if session is NOT currently running live
+            if (data.session.status !== "running") {
+              if (data.session.live_boards) {
+                setLiveBoards((prev) => ({
+                  ...prev,
+                  ...data.session.live_boards,
+                }));
+              }
+              if (data.session.live_board && !liveBoard) {
+                setLiveBoard(data.session.live_board);
+              }
             }
           }
         }
@@ -208,9 +216,9 @@ export const BenchmarkView: React.FC<Props> = ({
       }
     };
     fetchStatus();
-    timer = setInterval(fetchStatus, 1200);
+    timer = setInterval(fetchStatus, 1500);
     return () => clearInterval(timer);
-  }, [benchmarkLiveEvent]);
+  }, []);
 
   const handleTogglePos = (pos: ChessPosition) => {
     setPreviewPos(pos);

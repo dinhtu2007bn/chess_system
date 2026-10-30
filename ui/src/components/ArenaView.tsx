@@ -70,6 +70,38 @@ export const ArenaView: React.FC<Props> = ({
   useEffect(() => {
     if (arenaLiveEvent) {
       const slotKey = String(arenaLiveEvent.slot_id ?? 0);
+
+      // Dedicated Monotonic Clock Update from backend (every 80ms)
+      if (arenaLiveEvent.type === "arena_live_clock") {
+        setLiveBoards((prev) => {
+          const b = prev[slotKey];
+          if (!b) return prev;
+          return {
+            ...prev,
+            [slotKey]: {
+              ...b,
+              white_ms: arenaLiveEvent.white_ms,
+              black_ms: arenaLiveEvent.black_ms,
+              turn: arenaLiveEvent.turn,
+            },
+          };
+        });
+
+        if (arenaLiveEvent.slot_id === 0 || !liveBoard) {
+          setLiveBoard((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              white_ms: arenaLiveEvent.white_ms,
+              black_ms: arenaLiveEvent.black_ms,
+              turn: arenaLiveEvent.turn,
+            };
+          });
+        }
+        return;
+      }
+
+      // Live Move Update
       setLiveBoards((prev) => ({
         ...prev,
         [slotKey]: {
@@ -104,17 +136,20 @@ export const ArenaView: React.FC<Props> = ({
   useEffect(() => {
     if (arenaSessionEvent) {
       setSession(arenaSessionEvent);
-      if (arenaSessionEvent.live_boards) {
-        setLiveBoards((prev) => ({
-          ...prev,
-          ...arenaSessionEvent.live_boards,
-        }));
-      }
-      if (arenaSessionEvent.live_board) {
-        setLiveBoard((prev) => ({
-          ...(prev || {}),
-          ...arenaSessionEvent.live_board,
-        }));
+      // Only overwrite board states if tournament is NOT currently running
+      if (arenaSessionEvent.status !== "running") {
+        if (arenaSessionEvent.live_boards) {
+          setLiveBoards((prev) => ({
+            ...prev,
+            ...arenaSessionEvent.live_boards,
+          }));
+        }
+        if (arenaSessionEvent.live_board) {
+          setLiveBoard((prev) => ({
+            ...(prev || {}),
+            ...arenaSessionEvent.live_board,
+          }));
+        }
       }
     }
   }, [arenaSessionEvent]);
@@ -129,7 +164,8 @@ export const ArenaView: React.FC<Props> = ({
           const data = await res.json();
           if (data.session) {
             setSession(data.session);
-            if (data.session.live_board && !liveBoard) {
+            // Only overwrite board state if tournament is NOT currently running
+            if (data.session.status !== "running" && data.session.live_board && !liveBoard) {
               setLiveBoard(data.session.live_board);
             }
           }

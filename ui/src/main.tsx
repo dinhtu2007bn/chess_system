@@ -120,15 +120,8 @@ export function App() {
             setBenchmarkLiveEvent(payload);
           } else if (payload.type === "benchmark_update") {
             setBenchmarkSessionEvent(payload.session);
-          } else if (payload.type === "arena_live_move") {
+          } else if (payload.type === "arena_live_move" || payload.type === "arena_live_clock") {
             setArenaLiveEvent(payload);
-          } else if (payload.type === "arena_live_clock") {
-            setArenaLiveEvent((prev: any) => ({
-              ...(prev || {}),
-              white_ms: payload.white_ms,
-              black_ms: payload.black_ms,
-              turn: payload.turn,
-            }));
           } else if (payload.type === "arena_update") {
             setArenaSessionEvent(payload.session);
           } else if (payload.status !== undefined && payload.turn !== undefined) {
