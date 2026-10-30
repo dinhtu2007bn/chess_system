@@ -151,7 +151,10 @@ class GameController:
                 target_elapsed_ms = BOT_MOVE_MINIMUM_MS
                 delay_ms = max(0, target_elapsed_ms - response_elapsed_ms)
                 if delay_ms:
-                    await asyncio.sleep(min(delay_ms, self.clock.value(self.bot_color)) / 1000)
+                    rem_bot = self.clock.value(self.bot_color)
+                    sleep_ms = min(delay_ms, max(0, rem_bot - 100))
+                    if sleep_ms > 0:
+                        await asyncio.sleep(sleep_ms / 1000)
                 elapsed = self.clock.stop()
                 if self.clock.remaining[self.bot_color] <= 0:
                     raise BotProcessError("Bot timed out")

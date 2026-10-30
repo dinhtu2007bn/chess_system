@@ -19,6 +19,13 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .benchmark_manager import ArenaRunner, BenchmarkRunner, load_positions
+from .history_manager import (
+    clear_all_history,
+    delete_history_game,
+    get_match_detail,
+    get_pgn_file_path,
+    list_saved_matches,
+)
 from .bot_manager import BotManager
 from .chess960_rules import new_board
 from .game_controller import GameController
@@ -275,6 +282,7 @@ async def start_arena(request: StartArenaRequest) -> dict[str, Any]:
             game_time_seconds=game_time,
             increment_seconds=request.increment_seconds,
             format_type=request.format_type,
+            concurrency=request.concurrency,
         )
         return session
     except (ValueError, KeyError) as exc:
@@ -300,6 +308,54 @@ async def get_engine_status() -> dict[str, Any]:
         "elo_range": [1000, 2500],
         "default_elo": 1700,
     }
+
+
+# ==================== MATCH HISTORY & REPLAY API ====================
+
+@app.get("/api/history")
+async def get_match_history(
+    mode: str | None = Query(default=None, description="arena | benchmark | all"),
+    bot: str | None = Query(default=None, description="Bot name filter"),
+    limit: int = Query(default=100, ge=1, le=500),
+) -> list[dict[str, Any]]:
+    return list_saved_matches(session_type=mode, bot_filter=bot, limit=limit)
+
+
+@app.get("/api/history/{filename}")
+async def get_history_match_detail(filename: str) -> dict[str, Any]:
+    try:
+        return get_match_detail(filename)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Không tìm thấy ván đấu yêu cầu")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.get("/api/history/{filename}/download")
+async def download_history_pgn(filename: str):
+    try:
+        file_path = get_pgn_file_path(filename)
+        return FileResponse(
+            path=str(file_path),
+            filename=file_path.name,
+            media_type="application/x-chess-pgn",
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tập tin PGN")
+
+
+@app.delete("/api/history/{filename}")
+async def delete_history_match(filename: str) -> dict[str, bool]:
+    success = delete_history_game(filename)
+    if not success:
+        raise HTTPException(status_code=404, detail="Không tìm thấy ván đấu để xóa")
+    return {"deleted": True}
+
+
+@app.post("/api/history/clear")
+async def clear_history() -> dict[str, int]:
+    count = clear_all_history()
+    return {"cleared_count": count}
 
 
 # ==================== WEBSOCKET ====================

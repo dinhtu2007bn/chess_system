@@ -878,6 +878,7 @@ export const BenchmarkView: React.FC<Props> = ({
                       onChange={(e) => setRunsPerPosition(Number(e.target.value))}
                     >
                       <option value={1}>1 Lượt (Test nhanh)</option>
+                      <option value={2}>2 Lượt (Đổi màu Trắng - Đen chuẩn)</option>
                       <option value={3}>3 Lượt (Chuẩn khách quan W-B-W)</option>
                     </select>
                   </div>

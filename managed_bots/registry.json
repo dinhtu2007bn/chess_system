@@ -6,15 +6,15 @@
       "dir_name": "bot_V0",
       "created_at": "2026-10-14T23:52:00Z",
       "is_default": false,
-      "description": "Bot V0 - Phiên bản thử nghiệm với Fast Timer."
+      "description": "Bot V0 - PhiĂªn báº£n thá»­ nghiá»‡m vá»›i Fast Timer."
     },
     {
       "id": "bot_V1",
       "name": "Bot V1",
       "dir_name": "bot_V1",
       "created_at": "2026-10-14T23:50:00Z",
-      "is_default": true,
-      "description": "Bot V1 - Phiên bản nâng cao với Alpha-Beta, Iterative Deepening, TT và Adaptive Time Manager."
+      "is_default": false,
+      "description": "Bot V1 - PhiĂªn báº£n nĂ¢ng cao vá»›i Alpha-Beta, Iterative Deepening, TT vĂ  Adaptive Time Manager."
     },
     {
       "id": "bot_V2",
@@ -22,7 +22,7 @@
       "dir_name": "bot_V2",
       "created_at": "2026-10-15T11:58:07Z",
       "is_default": false,
-      "description": "Bot V2 - Phiên bản nâng cấp thuật toán tìm kiếm và đánh giá thế cờ."
+      "description": "Bot V2 - PhiĂªn báº£n nĂ¢ng cáº¥p thuáº­t toĂ¡n tĂ¬m kiáº¿m vĂ  Ä‘Ă¡nh giĂ¡ tháº¿ cá»."
     },
     {
       "id": "bot_V3",
@@ -30,7 +30,7 @@
       "dir_name": "bot_V3",
       "created_at": "2026-10-19T04:47:58Z",
       "is_default": false,
-      "description": "Bot V3 - Phiên bản mới nhất tải lên bởi người dùng."
+      "description": "Bot V3 - PhiĂªn báº£n má»›i nháº¥t táº£i lĂªn bá»Ÿi ngÆ°á»i dĂ¹ng."
     },
     {
       "id": "bot_V4",
@@ -38,7 +38,7 @@
       "dir_name": "bot_V4",
       "created_at": "2026-10-19T07:56:20.856482+00:00",
       "is_default": false,
-      "description": "sử dụng thêm king safty cải thiện timeout"
+      "description": "sá»­ dá»¥ng thĂªm king safty cáº£i thiá»‡n timeout"
     },
     {
       "id": "bot_v5",
@@ -46,31 +46,63 @@
       "dir_name": "bot_v5",
       "created_at": "2026-10-19T11:07:34.197498+00:00",
       "is_default": false,
-      "description": "tối ưu lại king safety và chia thời gian hợp lí"
+      "description": "tá»‘i Æ°u láº¡i king safety vĂ  chia thá»i gian há»£p lĂ­"
     },
     {
       "id": "bot_v6",
-      "name": "Bot V6 (Master)",
+      "name": "Bot V6 (Master V3 Engine)",
       "dir_name": "bot_v6",
       "created_at": "2026-10-20T12:20:00.000000+00:00",
       "is_default": false,
-      "description": "Bot V6 Master: Sức cờ tấn công V3 (44%+ WinRate), loại bỏ độc tố TT, mở rộng thời gian chiến thuật đỉnh 2.5-2.8s và bảo toàn 0% Timeout tuyệt đối."
+      "description": "Bot V6: Khôi phục 100% đánh giá V3 sạch, tối ưu dự đoán bước nhảy độ sâu (3.5x), ngắt đồng hồ thích ứng và trừ hao 500ms sàn."
     },
     {
       "id": "bot_v7",
-      "name": "Bot V7 (V3 Pure + Anti-Timeout)",
+      "name": "Bot V7 (Floor-Aware Master)",
       "dir_name": "bot_v7",
       "created_at": "2026-10-20T16:25:00.000000+00:00",
       "is_default": false,
-      "description": "Bot V7: Giữ nguyên 100% thuật toán tìm kiếm và đánh giá thuần túy của V3, chỉ khắc phục triệt để cơ chế ngắt thời gian (Adaptive Node Mask <30ms) và phân bổ cờ tàn để đạt 0% Timeout."
+      "description": "Bot V7 Master: Quản trị thời gian thông minh trừ thẳng 500ms độ trễ sàn hệ thống, trung bình 0.73s/nước, triệt tiêu 100% Timeout."
     },
     {
       "id": "bot_s_n",
-      "name": "bot sơn",
+      "name": "bot son",
       "dir_name": "bot_s_n",
       "created_at": "2026-10-21T10:33:48.056714+00:00",
       "is_default": false,
-      "description": "Bot tải lên từ thư mục bởi người dùng lúc 17:33 21/10/2026"
+      "description": "Bot táº£i lĂªn tá»« thÆ° má»¥c bá»Ÿi ngÆ°á»i dĂ¹ng lĂºc 17:33 21/10/2026"
+    },
+    {
+      "id": "bot_v8",
+      "name": "Bot V8 (Master Engine)",
+      "dir_name": "bot_v8",
+      "created_at": "2026-10-27T16:20:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot V8 Master: Khôi phục 100% đánh giá V3 sạch, loại bỏ hoàn toàn các lỗi đi Vua/Hậu ngớ ngẩn của V6, tối ưu hóa quản trị thời gian Floor-aware 500ms triệt tiêu timeout."
+    },
+    {
+      "id": "bot_v9",
+      "name": "Bot V9 (Grandmaster Shield)",
+      "dir_name": "bot_v9",
+      "created_at": "2026-10-28T16:00:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot V9 Grandmaster: Khắc phục triệt để đòn tốt phá thành Vua (Anti-Wedge Pawn, King Shelter Deficit), LMR Logarithmic tăng +2 Depth, Quiescence Promotion Danger, sửa 4 bảng EG PST."
+    },
+    {
+      "id": "bot_v10",
+      "name": "Bot V10 (Grandmaster Hybrid Engine)",
+      "dir_name": "bot_v10",
+      "created_at": "2026-10-30T14:25:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot V10: Phiên bản bot_test tiền nhiệm kết hợp cắt tỉa V9 với đánh giá Bot Son, sửa Quiescence Stalemate, thêm Mop-Up Evaluation và mở rộng Pawn Push."
+    },
+    {
+      "id": "bot_test",
+      "name": "Bot Test (Tuned Master Engine)",
+      "dir_name": "bot_test",
+      "created_at": "2026-10-30T14:30:00.000000+00:00",
+      "is_default": true,
+      "description": "Bot Test V3: Khắc phục triệt để lỗi dâng Tốt tự sát phá thành Vua (Castled King Shield Penalty), chuẩn hóa vùng đe dọa Vua (cắt giới hạn 280cp, tránh thí Hậu), phân bổ thời gian thông minh (sàn 0.42s tận dụng delay hệ thống, dồn toàn lực khi dưới ngưỡng tử 0.5s), phục hồi cửa sổ Aspiration và cắt tỉa LMP đạt Depth 6-7."
     }
   ]
 }

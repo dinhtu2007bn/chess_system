@@ -17,6 +17,7 @@ from .bot_process import BotProcess, BotProcessError
 from .chess960_rules import display_legal_moves, move_for_token, new_board
 from .clock import ChessClock
 from .external_engine import ExternalEngineSparring, FallbackSparringBot
+from .history_manager import save_match_pgn
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 POSITIONS_FILE = ROOT_DIR / "app" / "chess960_positions.json"
@@ -519,9 +520,16 @@ class BenchmarkRunner:
                         calc_ms = max(0, int((time.monotonic() - t0) * 1000))
                         delay_ms = max(0, 500 - calc_ms)
                         if delay_ms > 0:
-                            await asyncio.sleep(min(delay_ms, clock.value(turn)) / 1000.0)
+                            rem_now = clock.value(turn)
+                            sleep_ms = min(delay_ms, max(0, rem_now - 100))
+                            if sleep_ms > 0:
+                                await asyncio.sleep(sleep_ms / 1000.0)
 
                         elapsed_ms = clock.stop()
+                        if elapsed_ms < 500:
+                            shortfall = 500 - elapsed_ms
+                            clock.remaining[bot_color] = max(0, clock.remaining[bot_color] - shortfall)
+                            elapsed_ms = 500
                         bot_move_times.append(elapsed_ms)
 
                         # Check if bot exhausted clock
@@ -547,6 +555,7 @@ class BenchmarkRunner:
                         break
                 else:
                     # ================= OPPONENT TURN =================
+                    t0_opp = time.monotonic()
                     try:
                         # Stockfish thinks for reasonable slice of its remaining clock
                         opp_time_sec = max(0.1, min(2.5, curr_remaining / 1000.0 * 0.06))
@@ -568,7 +577,20 @@ class BenchmarkRunner:
                         else:
                             move = await fallback_opponent.choose_move(board, time_limit_seconds=opp_time_sec)
 
+                        # README Rule: Minimum 500ms per move applied to Stockfish / Opponent equally
+                        calc_opp_ms = max(0, int((time.monotonic() - t0_opp) * 1000))
+                        delay_opp_ms = max(0, 500 - calc_opp_ms)
+                        if delay_opp_ms > 0:
+                            rem_opp = clock.value(turn)
+                            sleep_opp_ms = min(delay_opp_ms, max(0, rem_opp - 100))
+                            if sleep_opp_ms > 0:
+                                await asyncio.sleep(sleep_opp_ms / 1000.0)
+
                         elapsed_ms = clock.stop()
+                        if elapsed_ms < 500:
+                            shortfall = 500 - elapsed_ms
+                            clock.remaining[not bot_color] = max(0, clock.remaining[not bot_color] - shortfall)
+                            elapsed_ms = 500
 
                         if clock.remaining[not bot_color] <= 0:
                             termination = "timeout"
@@ -641,6 +663,27 @@ class BenchmarkRunner:
 
         avg_time = sum(bot_move_times) / len(bot_move_times) if bot_move_times else 0.0
         peak_time = max(bot_move_times) if bot_move_times else 0.0
+
+        # Save game to history matches (PGN format)
+        white_player = session["bot_name"] if bot_is_white else session["opponent_name"]
+        black_player = session["opponent_name"] if bot_is_white else session["bot_name"]
+        try:
+            save_match_pgn(
+                session_type="benchmark",
+                session_id=session.get("id", "benchmark"),
+                match_id=f"{pos_id}_r{run_num}",
+                white_name=white_player,
+                black_name=black_player,
+                chess960_id=chess960_id,
+                initial_fen=fen,
+                moves=moves_played,
+                result=result,
+                termination=termination,
+                time_control=f"{session.get('game_time_seconds', 60)}+{session.get('increment_seconds', 1)}",
+                move_details=move_history_records,
+            )
+        except Exception as pgn_err:
+            print(f"[Warning] Failed to save benchmark PGN: {pgn_err}")
 
         return {
             "game_id": f"{pos_id}-r{run_num}",
@@ -765,6 +808,7 @@ class ArenaRunner:
         increment_seconds: int = 0,
         time_seconds: int | None = None,
         format_type: str = "round_robin",
+        concurrency: int = 1,
     ) -> dict[str, Any]:
         await self.stop()
         self._stop_requested = False
@@ -836,6 +880,28 @@ class ArenaRunner:
             for b in participating_bots
         }
 
+        effective_concurrency = max(1, min(concurrency, len(matches_to_play), 8))
+
+        live_boards = {}
+        for s_id in range(effective_concurrency):
+            m_sample = matches_to_play[min(s_id, len(matches_to_play) - 1)]
+            live_boards[str(s_id)] = {
+                "slot_id": s_id,
+                "match_id": m_sample["match_id"],
+                "position_id": m_sample.get("position_id"),
+                "position_name": m_sample.get("position_name", ""),
+                "white_bot_id": m_sample.get("white_bot_id"),
+                "white_bot_name": m_sample.get("white_bot_name", ""),
+                "black_bot_id": m_sample.get("black_bot_id"),
+                "black_bot_name": m_sample.get("black_bot_name", ""),
+                "fen": m_sample["fen"],
+                "turn": "white",
+                "white_ms": effective_time * 1000,
+                "black_ms": effective_time * 1000,
+                "history": [],
+                "status": "waiting",
+            }
+
         self.active_session = {
             "id": session_id,
             "format": format_type,
@@ -843,6 +909,7 @@ class ArenaRunner:
             "positions": selected_positions,
             "game_time_seconds": effective_time,
             "increment_seconds": increment_seconds,
+            "concurrency": effective_concurrency,
             "total_matches": len(matches_to_play),
             "completed_matches": 0,
             "current_match": None,
@@ -851,18 +918,8 @@ class ArenaRunner:
             "elo_ratings": elo_table,
             "score_table": score_table,
             "leaderboard": [],
-            "live_board": {
-                "match_id": 1,
-                "fen": selected_positions[0]["fen"] if selected_positions else "",
-                "turn": "white",
-                "white_ms": effective_time * 1000,
-                "black_ms": effective_time * 1000,
-                "history": [],
-                "white_bot_name": matches_to_play[0]["white_bot_name"] if matches_to_play else "",
-                "black_bot_name": matches_to_play[0]["black_bot_name"] if matches_to_play else "",
-                "position_name": matches_to_play[0]["position_name"] if matches_to_play else "",
-                "status": "waiting",
-            },
+            "live_boards": live_boards,
+            "live_board": live_boards["0"],
         }
         self._update_leaderboard()
 
@@ -907,18 +964,32 @@ class ArenaRunner:
         matches = session["matches"]
         time_ms = max(5000, session["game_time_seconds"] * 1000)
         inc_ms = max(0, session["increment_seconds"] * 1000)
+        concurrency = session.get("concurrency", 1)
 
-        try:
-            for idx, match in enumerate(matches):
-                if self._stop_requested:
+        match_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+        for m in matches:
+            match_queue.put_nowait(m)
+
+        num_workers = min(concurrency, match_queue.qsize())
+        if num_workers < 1:
+            num_workers = 1
+
+        lock = asyncio.Lock()
+
+        async def worker(slot_id: int) -> None:
+            while not match_queue.empty() and not self._stop_requested:
+                try:
+                    match = match_queue.get_nowait()
+                except asyncio.QueueEmpty:
                     break
 
-                session["current_match"] = match
-                match["status"] = "playing"
-                await self.broadcast_fn({"type": "arena_update", "session": session})
+                async with lock:
+                    session["current_match"] = match
+                    match["status"] = "playing"
+                    await self.broadcast_fn({"type": "arena_update", "session": session})
 
                 try:
-                    res = await self._play_arena_game(match, time_ms, inc_ms)
+                    res = await self._play_arena_game(match, time_ms, inc_ms, slot_id=slot_id)
                 except Exception as m_exc:
                     import traceback
                     traceback.print_exc()
@@ -929,47 +1000,53 @@ class ArenaRunner:
                         "loser_id": None,
                         "moves_count": 0,
                     }
-                match.update(res)
-                match["status"] = "finished"
 
-                w_id = match["white_bot_id"]
-                b_id = match["black_bot_id"]
-                result_str = res["result"]
+                async with lock:
+                    match.update(res)
+                    match["status"] = "finished"
 
-                if result_str == "1-0":
-                    session["score_table"][w_id]["wins"] += 1
-                    session["score_table"][w_id]["points"] += 1.0
-                    session["score_table"][b_id]["losses"] += 1
-                    s_w, s_b = 1.0, 0.0
-                elif result_str == "0-1":
-                    session["score_table"][b_id]["wins"] += 1
-                    session["score_table"][b_id]["points"] += 1.0
-                    session["score_table"][w_id]["losses"] += 1
-                    s_w, s_b = 0.0, 1.0
-                else:
-                    session["score_table"][w_id]["draws"] += 1
-                    session["score_table"][w_id]["points"] += 0.5
-                    session["score_table"][b_id]["draws"] += 1
-                    session["score_table"][b_id]["points"] += 0.5
-                    s_w, s_b = 0.5, 0.5
+                    w_id = match["white_bot_id"]
+                    b_id = match["black_bot_id"]
+                    result_str = res["result"]
 
-                if res.get("is_timeout"):
-                    timeout_loser = res.get("loser_id")
-                    if timeout_loser and timeout_loser in session["score_table"]:
-                        session["score_table"][timeout_loser]["timeouts"] += 1
+                    if result_str == "1-0":
+                        session["score_table"][w_id]["wins"] += 1
+                        session["score_table"][w_id]["points"] += 1.0
+                        session["score_table"][b_id]["losses"] += 1
+                        s_w, s_b = 1.0, 0.0
+                    elif result_str == "0-1":
+                        session["score_table"][b_id]["wins"] += 1
+                        session["score_table"][b_id]["points"] += 1.0
+                        session["score_table"][w_id]["losses"] += 1
+                        s_w, s_b = 0.0, 1.0
+                    else:
+                        session["score_table"][w_id]["draws"] += 1
+                        session["score_table"][w_id]["points"] += 0.5
+                        session["score_table"][b_id]["draws"] += 1
+                        session["score_table"][b_id]["points"] += 0.5
+                        s_w, s_b = 0.5, 0.5
 
-                # Standard FIDE Elo Update with K=32
-                r_w = session["elo_ratings"][w_id]
-                r_b = session["elo_ratings"][b_id]
-                e_w = 1.0 / (1.0 + math.pow(10, (r_b - r_w) / 400.0))
-                e_b = 1.0 - e_w
-                k = 32.0
-                session["elo_ratings"][w_id] = max(100.0, r_w + k * (s_w - e_w))
-                session["elo_ratings"][b_id] = max(100.0, r_b + k * (s_b - e_b))
+                    if res.get("is_timeout"):
+                        timeout_loser = res.get("loser_id")
+                        if timeout_loser and timeout_loser in session["score_table"]:
+                            session["score_table"][timeout_loser]["timeouts"] += 1
 
-                session["completed_matches"] += 1
-                self._update_leaderboard()
-                await self.broadcast_fn({"type": "arena_update", "session": session})
+                    # Standard FIDE Elo Update with K=32
+                    r_w = session["elo_ratings"][w_id]
+                    r_b = session["elo_ratings"][b_id]
+                    e_w = 1.0 / (1.0 + math.pow(10, (r_b - r_w) / 400.0))
+                    e_b = 1.0 - e_w
+                    k = 32.0
+                    session["elo_ratings"][w_id] = max(100.0, r_w + k * (s_w - e_w))
+                    session["elo_ratings"][b_id] = max(100.0, r_b + k * (s_b - e_b))
+
+                    session["completed_matches"] += 1
+                    self._update_leaderboard()
+                    await self.broadcast_fn({"type": "arena_update", "session": session})
+
+        try:
+            workers = [asyncio.create_task(worker(i)) for i in range(num_workers)]
+            await asyncio.gather(*workers)
 
             if not self._stop_requested:
                 session["status"] = "finished"
@@ -988,6 +1065,7 @@ class ArenaRunner:
         match: dict[str, Any],
         time_ms: int,
         inc_ms: int,
+        slot_id: int = 0,
     ) -> dict[str, Any]:
         fen = match["fen"]
         chess960_id = match.get("chess960_id", 518)
@@ -1007,6 +1085,7 @@ class ArenaRunner:
 
         # Set initial live board state and broadcast
         initial_live_board = {
+            "slot_id": slot_id,
             "match_id": match["match_id"],
             "position_id": match.get("position_id"),
             "position_name": match.get("position_name", ""),
@@ -1025,10 +1104,14 @@ class ArenaRunner:
             "status": "playing",
         }
         if self.active_session:
-            self.active_session["live_board"] = initial_live_board
+            if "live_boards" in self.active_session:
+                self.active_session["live_boards"][str(slot_id)] = initial_live_board
+            if slot_id == 0 or self.active_session.get("concurrency", 1) == 1:
+                self.active_session["live_board"] = initial_live_board
 
         await self.broadcast_fn({
             "type": "arena_live_move",
+            "slot_id": slot_id,
             **initial_live_board,
         })
 
@@ -1042,11 +1125,16 @@ class ArenaRunner:
                     break
                 w_val = clock.value(chess.WHITE)
                 b_val = clock.value(chess.BLACK)
-                if self.active_session and "live_board" in self.active_session:
-                    self.active_session["live_board"]["white_ms"] = w_val
-                    self.active_session["live_board"]["black_ms"] = b_val
+                if self.active_session:
+                    if "live_boards" in self.active_session and str(slot_id) in self.active_session["live_boards"]:
+                        self.active_session["live_boards"][str(slot_id)]["white_ms"] = w_val
+                        self.active_session["live_boards"][str(slot_id)]["black_ms"] = b_val
+                    if "live_board" in self.active_session and (slot_id == 0 or self.active_session.get("concurrency", 1) == 1):
+                        self.active_session["live_board"]["white_ms"] = w_val
+                        self.active_session["live_board"]["black_ms"] = b_val
                 await self.broadcast_fn({
                     "type": "arena_live_clock",
+                    "slot_id": slot_id,
                     "match_id": match["match_id"],
                     "white_ms": w_val,
                     "black_ms": b_val,
@@ -1123,9 +1211,15 @@ class ArenaRunner:
                     delay_ms = max(0, 500 - calc_ms)
                     if delay_ms > 0:
                         rem_curr = clock.value(turn)
-                        await asyncio.sleep(min(delay_ms, rem_curr) / 1000.0)
+                        sleep_ms = min(delay_ms, max(0, rem_curr - 100))
+                        if sleep_ms > 0:
+                            await asyncio.sleep(sleep_ms / 1000.0)
 
                     elapsed_ms = clock.stop()
+                    if elapsed_ms < 500:
+                        shortfall = 500 - elapsed_ms
+                        clock.remaining[turn] = max(0, clock.remaining[turn] - shortfall)
+                        elapsed_ms = 500
 
                     if clock.remaining[turn] <= 0:
                         termination = "timeout"
@@ -1158,6 +1252,7 @@ class ArenaRunner:
                 })
 
                 live_board_data = {
+                    "slot_id": slot_id,
                     "match_id": match["match_id"],
                     "position_id": match.get("position_id"),
                     "position_name": match.get("position_name", ""),
@@ -1176,11 +1271,15 @@ class ArenaRunner:
                     "status": "playing",
                 }
                 if self.active_session:
-                    self.active_session["live_board"] = live_board_data
+                    if "live_boards" in self.active_session:
+                        self.active_session["live_boards"][str(slot_id)] = live_board_data
+                    if slot_id == 0 or self.active_session.get("concurrency", 1) == 1:
+                        self.active_session["live_board"] = live_board_data
 
                 # Broadcast live arena step
                 await self.broadcast_fn({
                     "type": "arena_live_move",
+                    "slot_id": slot_id,
                     **live_board_data,
                 })
 
@@ -1204,10 +1303,34 @@ class ArenaRunner:
                     pass
             await asyncio.gather(w_proc.stop(), b_proc.stop(), return_exceptions=True)
 
-        if self.active_session and "live_board" in self.active_session:
-            self.active_session["live_board"]["status"] = "finished"
-            self.active_session["live_board"]["result"] = result
-            self.active_session["live_board"]["termination"] = termination
+        if self.active_session:
+            if "live_boards" in self.active_session and str(slot_id) in self.active_session["live_boards"]:
+                self.active_session["live_boards"][str(slot_id)]["status"] = "finished"
+                self.active_session["live_boards"][str(slot_id)]["result"] = result
+                self.active_session["live_boards"][str(slot_id)]["termination"] = termination
+            if "live_board" in self.active_session and (slot_id == 0 or self.active_session.get("concurrency", 1) == 1):
+                self.active_session["live_board"]["status"] = "finished"
+                self.active_session["live_board"]["result"] = result
+                self.active_session["live_board"]["termination"] = termination
+
+        # Save match to history matches (PGN format)
+        try:
+            save_match_pgn(
+                session_type="arena",
+                session_id=self.active_session.get("id", "arena") if self.active_session else "arena",
+                match_id=match.get("match_id", 1),
+                white_name=match.get("white_bot_name", "White Bot"),
+                black_name=match.get("black_bot_name", "Black Bot"),
+                chess960_id=chess960_id,
+                initial_fen=fen,
+                moves=moves_played,
+                result=result,
+                termination=termination,
+                time_control=f"{time_ms // 1000}+{inc_ms // 1000}",
+                move_details=history_records,
+            )
+        except Exception as pgn_err:
+            print(f"[Warning] Failed to save arena PGN: {pgn_err}")
 
         return {
             "result": result,

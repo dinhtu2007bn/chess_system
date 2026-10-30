@@ -171,9 +171,10 @@ class Searcher:
                         break
 
                     # Predict if next depth iteration would blow past hard deadline.
-                    # With PVS + LMR + Futility, effective branching factor is ~2.3x.
+                    # With python-chess, effective branching factor is ~3.5x - 4.0x.
                     iter_elapsed = now - iter_start
-                    if now + iter_elapsed * 2.3 > self.hard_deadline:
+                    predicted_next = max(iter_elapsed * 3.5, 0.04)
+                    if now + predicted_next > self.hard_deadline:
                         break
 
                 except _Timeout:
@@ -211,6 +212,8 @@ class Searcher:
             return 0, None
 
         for i, move in enumerate(moves):
+            if (self.nodes & self._node_mask) == 0 and time.time() >= self.hard_deadline:
+                raise _Timeout
             board.push(move)
 
             # Avoid repetitions – treat repeated positions as draws

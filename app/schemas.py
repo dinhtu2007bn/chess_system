@@ -37,6 +37,7 @@ class StartArenaRequest(BaseModel):
     bot_ids: list[str] = Field(min_length=2)
     position_ids: list[str] = Field(min_length=1)
     game_time_seconds: int = Field(default=60, ge=5, le=3600)
-    increment_seconds: int = Field(default=1, ge=0, le=30)
+    increment_seconds: int = Field(default=0, ge=0, le=30)
     time_seconds: int | None = None
     format_type: str = Field(default="round_robin", pattern="^(round_robin|1v1)$")
+    concurrency: int = Field(default=1, ge=1, le=8)

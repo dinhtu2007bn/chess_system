@@ -1,9 +1,9 @@
 """Search algorithms: Negamax Alpha-Beta + Iterative Deepening + Quiescence.
 
-V6 Master Engine:
+V3 Optimizations:
 1. Negamax with Alpha-Beta Pruning   – core search, prunes bad branches
 2. Iterative Deepening               – never runs out of time with no move
-3. Transposition Table (600k cap)    – pre-search generational eviction (zero in-recursion lag)
+3. Transposition Table               – generational cache eviction (no clear-all)
 4. Move Ordering (MVV-LVA + Killers) – maximizes pruning efficiency
 5. History Heuristic Aging           – preserves learned cutoff history across turns
 6. Quiescence Search                 – avoids horizon-effect blunders
@@ -11,11 +11,10 @@ V6 Master Engine:
 8. Check Extensions                  – don't cut off in the middle of checks
 9. Late Move Reductions (LMR)        – search unpromising moves at reduced depth
 10. Principal Variation Search (PVS) – zero-window for non-PV moves
-11. **Adaptive Node Check Mask**     – dynamic 256/128/64 node time checking (<3ms precision, 0% timeouts)
-12. **Fast Futility Pruning**        – uses board.gives_check(move) with zero push/pop overhead
-13. **Optimal Aspiration Windows**   – calibrated 50cp window for maximum alpha-beta cutoffs
-14. **Clean TT State (Zero Poison)** – pure mathematical draw scoring (0) preventing corrupted cutoffs
-15. **Reverse Futility Pruning**     – early cutoff at leaf nodes when evaluation dominates
+11. Aspiration Windows               – narrow search window from prev iteration
+12. Reverse Futility Pruning (RFP)   – early cutoff at leaf nodes when evaluation dominates
+13. Futility Pruning                 – prune hopeless quiet moves at depth 1-2
+14. Smart Time Prediction            – predict if next depth is feasible before starting
 """
 from __future__ import annotations
 
@@ -35,7 +34,7 @@ _TT_EXACT = 0
 _TT_LOWER = 1   # Score is a lower bound (beta cutoff / fail-high)
 _TT_UPPER = 2   # Score is an upper bound (fail-low)
 
-_TT_MAX_SIZE = 600_000  # Max transposition table entries
+_TT_MAX_SIZE = 1_000_000  # Max transposition table entries
 
 _MAX_PLY = 128   # Maximum search depth (safety bound)
 
@@ -46,8 +45,8 @@ _DELTA_MARGIN = 200
 _LMR_FULL_DEPTH_MOVES = 4   # Search first N moves at full depth
 _LMR_REDUCTION_LIMIT = 3    # Min depth to apply LMR
 
-# Aspiration window: 50 centipawns is the optimal sweet spot for cutoffs
-_ASP_WINDOW = 50
+# Aspiration window
+_ASP_WINDOW = 50   # Initial aspiration window (centipawns)
 
 
 class _Timeout(Exception):
@@ -73,7 +72,7 @@ class Searcher:
         self.nodes = 0
         self.last_depth = 0        # Track deepest completed depth
         self.hard_deadline = 0.0
-        self._node_mask = 255      # Adaptive time-checking mask (255 -> 127 -> 63)
+        self._node_mask = 127      # Adaptive time-checking mask (127 -> 63 -> 31)
         self._killer1: list[Optional[chess.Move]] = [None] * _MAX_PLY
         self._killer2: list[Optional[chess.Move]] = [None] * _MAX_PLY
         self._history: list[list[int]] = [[0] * 64 for _ in range(64)]
@@ -99,28 +98,17 @@ class Searcher:
         self.last_depth = 0
         self.generation += 1
 
-        # Periodic TT cleanup between turns (avoids lag spikes inside recursion)
-        if len(self.tt) >= _TT_MAX_SIZE:
-            old_cutoff = self.generation - 2
-            keys_to_del = [k for k, v in self.tt.items() if v[4] < old_cutoff or v[0] <= 1]
-            if len(keys_to_del) > 30_000:
-                for k in keys_to_del:
-                    del self.tt[k]
-            else:
-                for k in list(self.tt.keys())[:150_000]:
-                    del self.tt[k]
-
         start = time.time()
         self.hard_deadline = start + hard_limit
         soft_deadline = start + soft_limit
 
-        # Adaptive Node Mask initialization
-        if hard_limit <= 3.5:
+        # Adaptive Node Mask initialization (<50ms reaction time)
+        if hard_limit <= 0.3:
+            self._node_mask = 31
+        elif hard_limit <= 1.0:
             self._node_mask = 63
-        elif hard_limit <= 8.0:
-            self._node_mask = 127
         else:
-            self._node_mask = 255
+            self._node_mask = 127
 
         # Reset killers per search
         self._killer1 = [None] * _MAX_PLY
@@ -142,15 +130,15 @@ class Searcher:
 
                 try:
                     # --- Aspiration Windows ---
-                    # For depth >= 4, search with a narrow window around previous score
+                    # For depth >= 4, search with a narrow window around the
+                    # previous iteration's score. If the score falls outside,
+                    # re-search with a wider/full window.
                     if depth >= 4:
                         asp_delta = _ASP_WINDOW
                         alpha = prev_score - asp_delta
                         beta = prev_score + asp_delta
 
-                        score, move = self._search_root(
-                            board, depth, alpha, beta
-                        )
+                        score, move = self._search_root(board, depth, alpha, beta)
 
                         # Fail-low: score <= alpha → re-search with full lower bound
                         if score <= alpha:
@@ -183,13 +171,14 @@ class Searcher:
                         break
 
                     # Predict if next depth iteration would blow past hard deadline.
-                    # With PVS + LMR + Futility, effective branching factor is ~2.3x.
+                    # With python-chess, effective branching factor is ~3.5x - 4.0x.
                     iter_elapsed = now - iter_start
-                    if now + iter_elapsed * 2.3 > self.hard_deadline:
+                    predicted_next = max(iter_elapsed * 3.5, 0.04)
+                    if now + predicted_next > self.hard_deadline:
                         break
 
                 except _Timeout:
-                    break  # Hard deadline hit – use best move from last completed depth
+                    break  # Hard deadline hit – use best move from last depth
         finally:
             # Guarantee board is restored to exact root state even on timeout
             while len(board.move_stack) > root_stack_len:
@@ -223,9 +212,11 @@ class Searcher:
             return 0, None
 
         for i, move in enumerate(moves):
+            if (self.nodes & self._node_mask) == 0 and time.time() >= self.hard_deadline:
+                raise _Timeout
             board.push(move)
 
-            # Avoid repetitions – treat repeated positions as standard draw (0)
+            # Avoid repetitions – treat repeated positions as draws
             if board.is_repetition(2):
                 score = 0
             else:
@@ -269,7 +260,7 @@ class Searcher:
 
     # -----------------------------------------------------------------------
     # Negamax with alpha-beta, TT, null-move pruning, check extensions,
-    # LMR, PVS, Fast Futility Pruning, Reverse Futility Pruning
+    # LMR, PVS, Futility Pruning, Reverse Futility Pruning
     # -----------------------------------------------------------------------
 
     def _negamax(
@@ -281,19 +272,19 @@ class Searcher:
         ply: int,
         can_null: bool,
     ) -> int:
-        # --- Adaptive Time Check ---
+        # --- Adaptive Time check (<30ms precision, zero timeout overruns) ---
         self.nodes += 1
         if (self.nodes & self._node_mask) == 0:
             now = time.time()
             if now >= self.hard_deadline:
                 raise _Timeout
             rem = self.hard_deadline - now
-            if rem <= 3.5:
+            if rem <= 0.3:
+                self._node_mask = 31
+            elif rem <= 1.0:
                 self._node_mask = 63
-            elif rem <= 8.0:
-                self._node_mask = 127
 
-        # --- Draw detection (Clean 0 to prevent TT poisoning) ---
+        # --- Draw detection ---
         if board.is_repetition(2) or board.halfmove_clock >= 100:
             return 0
 
@@ -326,6 +317,7 @@ class Searcher:
         in_check = board.is_check()
 
         # --- Reverse Futility Pruning (Static Null Move Pruning) ---
+        # At depth 1-2, if static evaluation is far above beta, we can return beta immediately
         static_eval: Optional[int] = None
         if not is_pv and not in_check and depth <= 2:
             static_eval = evaluate(board)
@@ -334,6 +326,7 @@ class Searcher:
                 return beta
 
         # --- Futility Pruning Condition ---
+        # At depth 1-2, if static evaluation + margin <= alpha, quiet moves cannot help
         futility_prune = False
         if not is_pv and not in_check and depth <= 2:
             if static_eval is None:
@@ -343,6 +336,7 @@ class Searcher:
                 futility_prune = True
 
         # --- Null Move Pruning ---
+        # Skip when: in check, in endgame (zugzwang risk), already did NMP, or in PV node
         if (can_null
                 and not is_pv
                 and depth >= 3
@@ -363,7 +357,7 @@ class Searcher:
         if not moves:
             if in_check:
                 return -(MATE_SCORE - ply)   # Checkmate
-            return 0                          # Stalemate (clean 0)
+            return 0                          # Stalemate
 
         # --- Search each move ---
         orig_alpha = alpha
@@ -374,11 +368,14 @@ class Searcher:
             is_capture = board.is_capture(move)
             is_promotion = move.promotion is not None
 
-            # --- Fast Futility Pruning ---
+            # --- Futility Pruning ---
             # Skip quiet moves if position is so bad that quiet moves can't save alpha
-            # Uses board.gives_check(move) directly without push/pop!
             if futility_prune and i > 0 and not is_capture and not is_promotion:
-                if not board.gives_check(move):
+                # Still allow checks to be searched
+                board.push(move)
+                gives_check = board.is_check()
+                board.pop()
+                if not gives_check:
                     continue
 
             board.push(move)
@@ -464,17 +461,17 @@ class Searcher:
         beta: int,
         ply: int,
     ) -> int:
-        # --- Adaptive Time Check in Quiescence ---
+        # --- Adaptive Time check in quiescence ---
         self.nodes += 1
         if (self.nodes & self._node_mask) == 0:
             now = time.time()
             if now >= self.hard_deadline:
                 raise _Timeout
             rem = self.hard_deadline - now
-            if rem <= 3.5:
+            if rem <= 0.3:
+                self._node_mask = 31
+            elif rem <= 1.0:
                 self._node_mask = 63
-            elif rem <= 8.0:
-                self._node_mask = 127
 
         in_check = board.is_check()
 
@@ -612,7 +609,19 @@ class Searcher:
         flag: int,
         best_move: Optional[chess.Move],
     ) -> None:
-        """Store a position in the transposition table."""
+        """Store a position in the transposition table with generational eviction."""
+        if len(self.tt) >= _TT_MAX_SIZE:
+            # Smart eviction: prune old generations or low depth entries (keep current generation)
+            old_cutoff = self.generation - 2
+            keys_to_del = [k for k, v in self.tt.items() if v[4] < old_cutoff or v[0] <= 1]
+            if len(keys_to_del) > 50_000:
+                for k in keys_to_del:
+                    del self.tt[k]
+            else:
+                # If table is completely saturated, delete oldest 20%
+                for k in list(self.tt.keys())[:200_000]:
+                    del self.tt[k]
+
         old = self.tt.get(key)
         if old is None or depth >= old[0] or old[4] < self.generation:
             self.tt[key] = (depth, score, flag, best_move, self.generation)

@@ -8,6 +8,7 @@ type Props = {
   arenaSessionEvent?: any;
   arenaLiveEvent?: any;
   onRefreshPositions?: () => void;
+  onViewReplay?: (filename: string) => void;
 };
 
 function formatClock(milliseconds: number) {
@@ -24,6 +25,7 @@ export const ArenaView: React.FC<Props> = ({
   arenaSessionEvent,
   arenaLiveEvent,
   onRefreshPositions,
+  onViewReplay,
 }) => {
   const [selectedBotIds, setSelectedBotIds] = useState<Set<string>>(new Set());
   const [selectedPosIds, setSelectedPosIds] = useState<Set<string>>(new Set());
@@ -39,9 +41,11 @@ export const ArenaView: React.FC<Props> = ({
   const [gameTimeSec, setGameTimeSec] = useState<number>(60); // Default: 60s per player
   const [incrementSec, setIncrementSec] = useState<number>(0);  // Default: +0s (README Rule: no increment)
   const [formatType, setFormatType] = useState<"round_robin" | "1v1">("round_robin");
+  const [concurrency, setConcurrency] = useState<number>(1); // Multi-board concurrent matches
 
   const [session, setSession] = useState<ArenaSession | null>(null);
   const [liveBoard, setLiveBoard] = useState<LiveBoardState | null>(null);
+  const [liveBoards, setLiveBoards] = useState<Record<string, LiveBoardState>>({});
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -65,16 +69,34 @@ export const ArenaView: React.FC<Props> = ({
   // Real-time Arena live move and live clock via WebSocket
   useEffect(() => {
     if (arenaLiveEvent) {
-      setLiveBoard((prev) => ({
-        ...(prev || {}),
-        ...arenaLiveEvent,
-        fen: arenaLiveEvent.fen || prev?.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        history: arenaLiveEvent.history || prev?.history || [],
-        white_ms: arenaLiveEvent.white_ms !== undefined ? arenaLiveEvent.white_ms : prev?.white_ms ?? gameTimeSec * 1000,
-        black_ms: arenaLiveEvent.black_ms !== undefined ? arenaLiveEvent.black_ms : prev?.black_ms ?? gameTimeSec * 1000,
-        turn: arenaLiveEvent.turn || prev?.turn || "white",
-        status: arenaLiveEvent.status || prev?.status || "playing",
+      const slotKey = String(arenaLiveEvent.slot_id ?? 0);
+      setLiveBoards((prev) => ({
+        ...prev,
+        [slotKey]: {
+          ...(prev[slotKey] || {}),
+          ...arenaLiveEvent,
+          slot_id: arenaLiveEvent.slot_id ?? 0,
+          fen: arenaLiveEvent.fen || prev[slotKey]?.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          history: arenaLiveEvent.history || prev[slotKey]?.history || [],
+          white_ms: arenaLiveEvent.white_ms !== undefined ? arenaLiveEvent.white_ms : prev[slotKey]?.white_ms ?? gameTimeSec * 1000,
+          black_ms: arenaLiveEvent.black_ms !== undefined ? arenaLiveEvent.black_ms : prev[slotKey]?.black_ms ?? gameTimeSec * 1000,
+          turn: arenaLiveEvent.turn || prev[slotKey]?.turn || "white",
+          status: arenaLiveEvent.status || prev[slotKey]?.status || "playing",
+        },
       }));
+
+      if (arenaLiveEvent.slot_id === 0 || !liveBoard) {
+        setLiveBoard((prev) => ({
+          ...(prev || {}),
+          ...arenaLiveEvent,
+          fen: arenaLiveEvent.fen || prev?.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          history: arenaLiveEvent.history || prev?.history || [],
+          white_ms: arenaLiveEvent.white_ms !== undefined ? arenaLiveEvent.white_ms : prev?.white_ms ?? gameTimeSec * 1000,
+          black_ms: arenaLiveEvent.black_ms !== undefined ? arenaLiveEvent.black_ms : prev?.black_ms ?? gameTimeSec * 1000,
+          turn: arenaLiveEvent.turn || prev?.turn || "white",
+          status: arenaLiveEvent.status || prev?.status || "playing",
+        }));
+      }
     }
   }, [arenaLiveEvent]);
 
@@ -82,6 +104,12 @@ export const ArenaView: React.FC<Props> = ({
   useEffect(() => {
     if (arenaSessionEvent) {
       setSession(arenaSessionEvent);
+      if (arenaSessionEvent.live_boards) {
+        setLiveBoards((prev) => ({
+          ...prev,
+          ...arenaSessionEvent.live_boards,
+        }));
+      }
       if (arenaSessionEvent.live_board) {
         setLiveBoard((prev) => ({
           ...(prev || {}),
@@ -192,6 +220,7 @@ export const ArenaView: React.FC<Props> = ({
       game_time_seconds: gameTimeSec,
       increment_seconds: incrementSec,
       format_type: formatType,
+      concurrency: concurrency,
     };
 
     try {
@@ -310,77 +339,265 @@ export const ArenaView: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* TWO COLUMN LIVE LAYOUT */}
-          <div className="benchmark-two-col" style={{ marginTop: 14 }}>
-            {/* LEFT COLUMN: LIVE CHESSBOARD WITH REAL-TIME CLOCKS */}
-            <div className="bench-left-panel panel">
-              <div className="live-board-header">
-                <span className="live-badge">♟️ Bàn Cờ Thi Đấu Thực Tế</span>
-                <strong className="live-pos-title" title={posName}>
-                  {posName}
-                </strong>
+          {/* CONCURRENCY AWARE ARENA RUNNING VIEW */}
+          {(session?.concurrency || concurrency) > 1 ? (
+            <div>
+              {/* MULTI-BOARD GRID (WHEN CONCURRENCY > 1) */}
+              <div className="multi-board-grid" style={{ marginTop: 14 }}>
+                {Array.from({ length: session?.concurrency || concurrency }).map((_, slotId) => {
+                  const b = liveBoards[String(slotId)];
+                  const boardFen =
+                    b?.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+                  const isWhiteTurn = b?.turn === "white";
+                  const isBlackTurn = b?.turn === "black";
+
+                  return (
+                    <div
+                      key={slotId}
+                      className={`mini-board-card ${b?.status === "playing" ? "active-slot" : ""}`}
+                    >
+                      <div className="mini-card-header">
+                        <div className="flex-center" style={{ gap: 6 }}>
+                          <span className="slot-badge">Bàn #{slotId + 1}</span>
+                          {b?.match_id && <span className="mini-run-tag">Trận #{b.match_id}</span>}
+                        </div>
+                        <span className="mini-pos-info" title={b?.position_name}>
+                          {b?.position_name || "Thế cờ"}
+                        </span>
+                      </div>
+
+                      <div className={`mini-clock ${isBlackTurn && b?.status === "playing" ? "mini-clock-active" : ""}`}>
+                        <span className="mini-clock-player">
+                          ⚫ {b?.black_bot_name || "Đen"}
+                          {isBlackTurn && b?.status === "playing" && <span className="pulse-dot"> •</span>}
+                        </span>
+                        <strong className="mini-clock-val">
+                          {formatClock(b?.black_ms ?? gameTimeSec * 1000)}
+                        </strong>
+                      </div>
+
+                      <div className="mini-board-wrapper">
+                        <Chessboard
+                          position={boardFen}
+                          boardOrientation="white"
+                          arePiecesDraggable={false}
+                        />
+                      </div>
+
+                      <div className={`mini-clock ${isWhiteTurn && b?.status === "playing" ? "mini-clock-active" : ""}`}>
+                        <span className="mini-clock-player">
+                          ⚪ {b?.white_bot_name || "Trắng"}
+                          {isWhiteTurn && b?.status === "playing" && <span className="pulse-dot"> •</span>}
+                        </span>
+                        <strong className="mini-clock-val">
+                          {formatClock(b?.white_ms ?? gameTimeSec * 1000)}
+                        </strong>
+                      </div>
+
+                      <div className="mini-card-footer">
+                        <div className="mini-last-move">
+                          <span>Nước: </span>
+                          <strong>
+                            {b?.last_move_san ? `${b.last_move_san} (${b.last_move})` : "Chưa có"}
+                          </strong>
+                        </div>
+                        <div className="mini-moves-count">
+                          {b?.moves_count ? `${b.moves_count} nước` : "0 nước"}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* BLACK BOT CLOCK */}
-              <div className={`bench-clock ${isTurnBlack ? "clock-running" : ""}`}>
-                <div className="clock-user-info">
-                  <span>⚫</span>
-                  <strong>{blackBotName}</strong>
-                  {isTurnBlack && <span className="pulse-dot">Đang nghĩ...</span>}
-                </div>
-                <strong>{formatClock(liveBoard?.black_ms ?? gameTimeSec * 1000)}</strong>
-              </div>
-
-              {/* CHESSBOARD */}
-              <div className="bench-chessboard-box">
-                <Chessboard
-                  position={activeBoardFen}
-                  boardOrientation="white"
-                  arePiecesDraggable={false}
-                />
-              </div>
-
-              {/* WHITE BOT CLOCK */}
-              <div className={`bench-clock ${isTurnWhite ? "clock-running" : ""}`}>
-                <div className="clock-user-info">
-                  <span>⚪</span>
-                  <strong>{whiteBotName}</strong>
-                  {isTurnWhite && <span className="pulse-dot">Đang nghĩ...</span>}
-                </div>
-                <strong>{formatClock(liveBoard?.white_ms ?? gameTimeSec * 1000)}</strong>
-              </div>
-
-              {/* MOVE TICKER */}
-              <div className="live-moves-ticker">
-                <span className="ticker-label">Nước đi vừa thực hiện:</span>
-                <strong className="ticker-val">
-                  {liveBoard?.last_move_san ? `${liveBoard.last_move_san} (${liveBoard.last_move})` : "Bắt đầu"}
-                </strong>
-                <span className="ticker-count">
-                  {liveBoard?.moves_count ? `${liveBoard.moves_count} nước` : "0 nước"}
-                </span>
-              </div>
-
-              {/* RECENT MOVES CHIPS */}
-              {liveBoard?.history && liveBoard.history.length > 0 && (
-                <div className="scrollable-table-box" style={{ maxHeight: 90, padding: 6, fontSize: "0.78rem" }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                    {liveBoard.history.map((h, idx) => (
-                      <span
-                        key={idx}
-                        className={`status-pill ${h.turn === "white" ? "pill-running" : ""}`}
-                        style={{ fontSize: "0.72rem", padding: "2px 6px" }}
-                      >
-                        {h.turn === "white" ? "⚪" : "⚫"} {h.san} ({h.elapsed_ms ?? 0}ms)
-                      </span>
-                    ))}
+              {/* BELOW MULTI-BOARD: LEADERBOARD & RECENT MATCHES */}
+              <div className="arena-bottom-two-col" style={{ marginTop: 16 }}>
+                {/* LEADERBOARD TABLE */}
+                {session?.leaderboard && session.leaderboard.length > 0 && (
+                  <div className="panel bench-result-compact">
+                    <h3 className="m-0 mb-8">🏆 Bảng Xếp Hạng & Hệ Số Elo Nội Bộ</h3>
+                    <div className="scrollable-table-box" style={{ maxHeight: 240 }}>
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Hạng</th>
+                            <th>Tên Bot</th>
+                            <th>Hệ Số Elo</th>
+                            <th>Điểm Số</th>
+                            <th>Thắng</th>
+                            <th>Hòa</th>
+                            <th>Thua</th>
+                            <th>Timeout</th>
+                            <th>Tỷ Lệ Thắng</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {session.leaderboard.map((row, idx) => (
+                            <tr key={row.bot_id} className={idx === 0 ? "leader-row" : ""}>
+                              <td>
+                                <strong className="rank-num">
+                                  {idx === 0 ? "🥇 1" : idx === 1 ? "🥈 2" : idx === 2 ? "🥉 3" : idx + 1}
+                                </strong>
+                              </td>
+                              <td><strong>{row.bot_name}</strong></td>
+                              <td><strong className="elo-badge">{row.elo}</strong></td>
+                              <td><strong className="points-text">{row.points} pts</strong></td>
+                              <td className="text-success">{row.wins}</td>
+                              <td>{row.draws}</td>
+                              <td className="text-danger">{row.losses}</td>
+                              <td>
+                                {row.timeouts > 0 ? (
+                                  <span className="text-danger">⚠️ {row.timeouts}</span>
+                                ) : (
+                                  <span className="text-muted">0</span>
+                                )}
+                              </td>
+                              <td>{row.winrate}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* RIGHT COLUMN: ACTIVE LEADERBOARD & RECENT MATCHES */}
-            <div className="bench-right-panel">
+                {/* COMPLETED MATCHES TABLE IN MULTI-BOARD VIEW */}
+                {session?.matches && session.matches.filter((m) => m.status === "finished").length > 0 && (
+                  <div className="panel bench-result-compact">
+                    <div className="flex-between mb-8">
+                      <h3 className="m-0">
+                        Lịch Sử Trận Đã Đấu ({session.matches.filter((m) => m.status === "finished").length})
+                      </h3>
+                      {onViewReplay && (
+                        <button
+                          className="btn-secondary btn-sm"
+                          onClick={() => onViewReplay("")}
+                        >
+                          📜 Xem Biên Bản Tất Cả
+                        </button>
+                      )}
+                    </div>
+                    <div className="scrollable-table-box" style={{ maxHeight: 240 }}>
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Trận</th>
+                            <th>Trắng</th>
+                            <th>Đen</th>
+                            <th>Thế Cờ</th>
+                            <th>Tỷ Số</th>
+                            <th>Kết Thúc</th>
+                            <th>Biên Bản</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {session.matches
+                            .filter((m) => m.status === "finished")
+                            .map((m) => (
+                              <tr key={m.match_id}>
+                                <td>#{m.match_id}</td>
+                                <td>{m.white_bot_name}</td>
+                                <td>{m.black_bot_name}</td>
+                                <td>{m.position_name}</td>
+                                <td><span className="outcome-pill">{m.result}</span></td>
+                                <td>
+                                  {m.is_timeout ? (
+                                    <strong className="text-danger">⚠️ Timeout</strong>
+                                  ) : (
+                                    m.termination
+                                  )}
+                                </td>
+                                <td>
+                                  {onViewReplay && (
+                                    <button
+                                      className="btn-secondary btn-sm"
+                                      onClick={() => onViewReplay("")}
+                                    >
+                                      👁️ Xem
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* SINGLE BOARD CLASSIC VIEW (WHEN CONCURRENCY === 1) */
+            <div className="benchmark-two-col" style={{ marginTop: 14 }}>
+              {/* LEFT COLUMN: LIVE CHESSBOARD WITH REAL-TIME CLOCKS */}
+              <div className="bench-left-panel panel">
+                <div className="live-board-header">
+                  <span className="live-badge">♟️ Bàn Cờ Thi Đấu Thực Tế</span>
+                  <strong className="live-pos-title" title={posName}>
+                    {posName}
+                  </strong>
+                </div>
+
+                {/* BLACK BOT CLOCK */}
+                <div className={`bench-clock ${isTurnBlack ? "clock-running" : ""}`}>
+                  <div className="clock-user-info">
+                    <span>⚫</span>
+                    <strong>{blackBotName}</strong>
+                    {isTurnBlack && <span className="pulse-dot">Đang nghĩ...</span>}
+                  </div>
+                  <strong>{formatClock(liveBoard?.black_ms ?? gameTimeSec * 1000)}</strong>
+                </div>
+
+                {/* CHESSBOARD */}
+                <div className="bench-chessboard-box">
+                  <Chessboard
+                    position={activeBoardFen}
+                    boardOrientation="white"
+                    arePiecesDraggable={false}
+                  />
+                </div>
+
+                {/* WHITE BOT CLOCK */}
+                <div className={`bench-clock ${isTurnWhite ? "clock-running" : ""}`}>
+                  <div className="clock-user-info">
+                    <span>⚪</span>
+                    <strong>{whiteBotName}</strong>
+                    {isTurnWhite && <span className="pulse-dot">Đang nghĩ...</span>}
+                  </div>
+                  <strong>{formatClock(liveBoard?.white_ms ?? gameTimeSec * 1000)}</strong>
+                </div>
+
+                {/* MOVE TICKER */}
+                <div className="live-moves-ticker">
+                  <span className="ticker-label">Nước đi vừa thực hiện:</span>
+                  <strong className="ticker-val">
+                    {liveBoard?.last_move_san ? `${liveBoard.last_move_san} (${liveBoard.last_move})` : "Bắt đầu"}
+                  </strong>
+                  <span className="ticker-count">
+                    {liveBoard?.moves_count ? `${liveBoard.moves_count} nước` : "0 nước"}
+                  </span>
+                </div>
+
+                {/* RECENT MOVES CHIPS */}
+                {liveBoard?.history && liveBoard.history.length > 0 && (
+                  <div className="scrollable-table-box" style={{ maxHeight: 90, padding: 6, fontSize: "0.78rem" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {liveBoard.history.map((h, idx) => (
+                        <span
+                          key={idx}
+                          className={`status-pill ${h.turn === "white" ? "pill-running" : ""}`}
+                          style={{ fontSize: "0.72rem", padding: "2px 6px" }}
+                        >
+                          {h.turn === "white" ? "⚪" : "⚫"} {h.san} ({h.elapsed_ms ?? 0}ms)
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT COLUMN: ACTIVE LEADERBOARD & RECENT MATCHES */}
+              <div className="bench-right-panel">
               {/* CURRENT MATCH BANNER */}
               {currMatch && (
                 <div className="active-match-banner" style={{ margin: 0 }}>
@@ -461,6 +678,7 @@ export const ArenaView: React.FC<Props> = ({
                           <th>Thế Cờ</th>
                           <th>Tỷ Số</th>
                           <th>Kết Thúc</th>
+                          <th>Biên Bản</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -480,6 +698,16 @@ export const ArenaView: React.FC<Props> = ({
                                   m.termination
                                 )}
                               </td>
+                              <td>
+                                {onViewReplay && (
+                                  <button
+                                    className="btn-secondary btn-sm"
+                                    onClick={() => onViewReplay("")}
+                                  >
+                                    👁️ Xem
+                                  </button>
+                                )}
+                              </td>
                             </tr>
                           ))}
                       </tbody>
@@ -489,6 +717,7 @@ export const ArenaView: React.FC<Props> = ({
               )}
             </div>
           </div>
+        )}
         </div>
       ) : (
         /* ========================================================================= */
@@ -711,13 +940,28 @@ export const ArenaView: React.FC<Props> = ({
                       <option value="1v1">Đấu Tay Đôi (1v1 Match)</option>
                     </select>
                   </div>
+
+                  <div className="form-group flex-1">
+                    <label>⚡ Bàn Cờ Song Song:</label>
+                    <select
+                      value={concurrency}
+                      disabled={isRunning}
+                      onChange={(e) => setConcurrency(Number(e.target.value))}
+                    >
+                      <option value={1}>1 Bàn Cờ (Tuần tự - Mặc định)</option>
+                      <option value={2}>2 Bàn Cờ Song Song</option>
+                      <option value={3}>3 Bàn Cờ Song Song</option>
+                      <option value={4}>4 Bàn Cờ Song Song</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* ACTION & SUMMARY ROW */}
                 <div className="flex-between bench-start-row">
                   <div className="bench-plan-info">
                     Đã chọn: <strong>{selectedBotIds.size} bot</strong> × <strong>{selectedPosIds.size} thế cờ</strong> ={" "}
-                    <strong className="text-highlight">{estimatedMatches} trận đấu</strong>
+                    <strong className="text-highlight">{estimatedMatches} trận đấu</strong>{" "}
+                    (Chạy song song: <strong>{concurrency} bàn cờ đồng thời</strong>)
                   </div>
                   <button
                     className="btn-primary btn-large"

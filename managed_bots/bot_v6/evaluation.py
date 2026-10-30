@@ -1,13 +1,13 @@
 """Board evaluation heuristics with Tapered Evaluation (Middlegame + Endgame).
 
-V6 High-Performance Tactical Engine:
+V3 Optimized Engine:
 1. Material counting (piece values)
 2. Piece-Square Tables (positional bonuses per square, per game phase)
 3. Pawn structure (doubled & isolated pawn penalties)
 4. Bishop pair bonus (+50 cp)
 5. Passed pawn bonuses (scaled by rank, higher in endgame)
 6. Rook on open (+20 cp) and semi-open (+10 cp) files
-7. **Chess960 Bitmask Bishop Anti-Trapping & Open Diagonal Incentives**:
+7. **Lightning-fast Chess960 Bishop Development & Anti-Trapping**:
    - Uses zero-overhead precomputed bitmasks (8M ops/sec)
    - Penalizes back-rank bishops trapped behind friendly pawns (-25 cp)
    - Rewards opening diagonals for corner/backrank bishops (+15 cp)
@@ -50,6 +50,7 @@ _ROOK_OPEN_FILE = 20
 _ROOK_SEMI_OPEN_FILE = 10
 
 # Chess960 Back-rank Bishop Trap Masks (Rank 1 for White, Rank 8 for Black)
+# For White sq in 0..7, bitmask of pawns on rank 2 blocking its diagonal(s)
 _W_BISHOP_TRAP = (
     1 << 9,                  # a1 blocked by b2
     (1 << 8) | (1 << 10),    # b1 blocked by a2, c2
@@ -61,6 +62,7 @@ _W_BISHOP_TRAP = (
     1 << 14,                 # h1 blocked by g2
 )
 
+# For Black sq in 56..63, bitmask of pawns on rank 7 blocking its diagonal(s)
 _B_BISHOP_TRAP = (
     1 << 49,                 # a8 blocked by b7
     (1 << 48) | (1 << 50),   # b8 blocked by a7, c7
@@ -72,8 +74,8 @@ _B_BISHOP_TRAP = (
     1 << 54,                 # h8 blocked by g7
 )
 
-_BISHOP_TRAPPED_PENALTY = -25
-_BISHOP_OPEN_BONUS = 15
+_BISHOP_TRAPPED_PENALTY = -70
+_BISHOP_OPEN_BONUS = 40
 
 # ===========================================================================
 # Piece-Square Tables
@@ -230,7 +232,7 @@ def evaluate(board: chess.Board) -> int:
 
         phase += (len(w_set) + len(b_set)) * pw
 
-        # Track pieces for structural analysis
+        # Cache pawn positions for structure & passed pawn analysis
         if pt == chess.PAWN:
             w_pawn_sqs = list(w_set)
             b_pawn_sqs = list(b_set)
@@ -270,25 +272,26 @@ def evaluate(board: chess.Board) -> int:
     if bb >= 2:
         pawn_adj -= _BISHOP_PAIR_BONUS
 
-    # --- Chess960 Bishop Mobility & Anti-Trapping ---
-    # In Chess960, bishops frequently start in the corners (a1/b1/g1/h1).
-    # Actively rewards opening diagonals and severely penalizes leaving bishops trapped behind pawns.
-    if phase > 2:
+    # --- Chess960 Bitmask Bishop Anti-Trapping & Open Diagonal Incentives ---
+    # Zero-overhead bitwise operations directly encouraging pawn pushes to free corner bishops
+    if phase > 4:
+        w_pawns_bb = int(board.pawns & board.occupied_co[chess.WHITE])
         for sq in w_bishops:
-            att = len(board.attacks(sq) & ~board.occupied_co[chess.WHITE])
-            score_mg += att * 6
-            score_eg += att * 4
-            if sq < 8 and att <= 1:
-                score_mg -= 80
-                score_eg -= 40
+            if sq < 8:  # Back rank bishop
+                mask = _W_BISHOP_TRAP[sq]
+                if (w_pawns_bb & mask) == mask:
+                    score_mg += _BISHOP_TRAPPED_PENALTY
+                elif not (w_pawns_bb & mask):
+                    score_mg += _BISHOP_OPEN_BONUS
 
+        b_pawns_bb = int(board.pawns & board.occupied_co[chess.BLACK])
         for sq in b_bishops:
-            att = len(board.attacks(sq) & ~board.occupied_co[chess.BLACK])
-            score_mg -= att * 6
-            score_eg -= att * 4
-            if sq >= 56 and att <= 1:
-                score_mg += 80
-                score_eg += 40
+            if sq >= 56:  # Back rank bishop
+                mask = _B_BISHOP_TRAP[sq - 56]
+                if (b_pawns_bb & mask) == mask:
+                    score_mg -= _BISHOP_TRAPPED_PENALTY
+                elif not (b_pawns_bb & mask):
+                    score_mg -= _BISHOP_OPEN_BONUS
 
     # --- Passed pawns ---
     pp_mg = 0

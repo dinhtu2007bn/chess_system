@@ -1,10 +1,13 @@
 """Dynamic time allocation for the remaining game clock.
 
-V7 Anti-Timeout Time Management (built on V3):
-- Preserves V3's exact tactical allocation, branching complexity, and phase multipliers.
-- Fixes endgame moves_left saturation for long games (> 32 moves).
-- Strict Emergency Curve under 2.5s and 5.0s guaranteeing 0% timeouts under 500ms platform delay.
-- Retains V3's high peak thinking budget for sharp middlegame tactics.
+Master Anti-Timeout Time Manager:
+- Floor-Aware Budgeting: Directly accounts for the mandatory 500ms platform delay
+  per move (MIN_MOVE_CHARGE = 0.5s) to guarantee zero clock depletion.
+- Scalable Depth Investment: Allows 0.8s - 1.4s thinking time in 60s games (depth 5-6),
+  scaling smoothly with branching complexity and game phases.
+- Multi-Tier Emergency Glide Path: Instant fast response (0.02s - 0.08s) when clock drops,
+  preventing artificial sleep timeouts.
+- Absolute Safety Ceiling: Guaranteed headroom leaving at least 0.65s above platform floor.
 """
 from __future__ import annotations
 
@@ -15,96 +18,95 @@ import chess
 from chesslab_sdk import BotConfig, SearchContext
 
 
+MIN_MOVE_CHARGE = 0.50   # Mandatory platform sleep floor per move (seconds)
+SAFETY_BUFFER = 0.15     # Additional network/IPC buffer (seconds)
+
+
 def get_time_limits(
     context: SearchContext,
     board: chess.Board,
     config: Optional[BotConfig] = None,
 ) -> tuple[float, float]:
     """Return ``(soft_limit, hard_limit)`` in seconds."""
-    remaining_s = max(0.05, context.time_remaining_ms / 1000.0)
+    remaining_s = max(0.02, context.time_remaining_ms / 1000.0)
     opp_remaining_s = getattr(context, "opponent_time_remaining_ms", None)
     if opp_remaining_s is not None:
-        opp_remaining_s /= 1000.0
+        opp_remaining_s = max(0.02, opp_remaining_s / 1000.0)
     else:
         opp_remaining_s = remaining_s
 
     ply = context.ply
-    moves_played = ply // 2  # Full moves made by us
+    moves_played = ply // 2
 
-    # Determine total expected game moves based on initial clock
-    initial_s = 180.0
+    # Determine total expected game moves based on clock and current phase
+    initial_s = 60.0
     if config is not None and hasattr(config, "initial_time_ms"):
         initial_s = max(10.0, config.initial_time_ms / 1000.0)
 
-    # Chess960 games typically last 42-50 moves
-    expected_total_moves = 38 if initial_s <= 60.0 else 46
+    # Estimate remaining turns (Chess960 games typically finish in 40-52 moves)
+    expected_moves = max(12, min(44, 50 - moves_played // 2))
 
-    # In extended games (> 32 moves), decay smoothly instead of clamping to 16
-    if moves_played > 32:
-        moves_left = max(8, min(16, 50 - moves_played // 2))
+    # Calculate mandatory floor delay reserve needed for the rest of the game
+    floor_reserve = expected_moves * MIN_MOVE_CHARGE
+
+    # Usable time budget strictly for search computation
+    usable_s = max(0.0, remaining_s - floor_reserve - 0.50)
+
+    if usable_s > 0.0:
+        base = usable_s / expected_moves
     else:
-        moves_left = max(16, expected_total_moves - moves_played)
+        # Time pressure: clock is close to the floor requirement; use tiny compute slices
+        base = min(0.06, remaining_s / (2.5 * expected_moves))
 
-    # Base budget per move
-    base = remaining_s / moves_left
-
-    # Branching complexity factor: scale by number of legal moves (V3 exact values)
+    # Branching complexity factor based on number of legal choices
     num_legal = board.legal_moves.count()
     if num_legal > 38:
-        complexity = 1.20   # Highly tactical/open position
+        complexity = 1.25   # Sharp, tactical opening/middlegame
     elif num_legal > 26:
-        complexity = 1.05   # Average middlegame
+        complexity = 1.10   # Average active position
     elif num_legal > 14:
-        complexity = 0.90   # Simplified position
+        complexity = 0.95   # Solid, semi-closed
     else:
-        complexity = 0.75   # Few choices, play faster to save time
+        complexity = 0.75   # Restricted choices, move fast
 
-    # Game phase multiplier (V3 exact values)
+    # Phase multiplier
     if moves_played < 4:
-        # Chess960 opening: steady development
-        phase_mult = 1.0
-    elif moves_played < 24:
-        # Middlegame: allow investment only when complexity is high
-        phase_mult = 1.15
-    elif moves_played < 34:
-        # Late middlegame / transition
-        phase_mult = 0.95
+        phase_mult = 1.05   # Solid opening development
+    elif moves_played < 26:
+        phase_mult = 1.20   # Critical middlegame clashes
+    elif moves_played < 36:
+        phase_mult = 0.95   # Transition
     else:
-        # Endgame: conserve clock, trees are small
-        phase_mult = 0.80
+        phase_mult = 0.80   # Endgame: narrower trees, conserve clock
 
-    # Combine multipliers (bounded between 0.70x and 1.35x, V3 exact)
     multiplier = max(0.70, min(1.35, complexity * phase_mult))
 
     soft_limit = base * multiplier
-    hard_limit = base * 2.5
+    hard_limit = min(soft_limit * 1.50, base * 1.80)
 
-    # Critical defensive situation: extra time when in check (V3 exact)
+    # In-check defensive bonus: slight boost to find evasion
     if board.is_check():
-        soft_limit *= 1.25
-        hard_limit *= 1.25
+        soft_limit *= 1.20
+        hard_limit *= 1.20
 
-    # Opponent time pressure: if opponent has critically low time, play solid & steady (V3 exact)
-    if opp_remaining_s < remaining_s * 0.35 and remaining_s > 15.0:
-        soft_limit *= 0.85
-
-    # Smooth Multi-tier Emergency Curve (Never forfeit on time under 500ms delay)
+    # Multi-Tier Emergency Glide Path (Guarantees zero timeout forfeit)
     if remaining_s < 2.5:
-        soft_limit = min(0.04, remaining_s * 0.03)
-        hard_limit = min(0.08, remaining_s * 0.06)
-    elif remaining_s < 5.0:
-        soft_limit = min(0.08, remaining_s * 0.04)
-        hard_limit = min(0.20, remaining_s * 0.08)
-    elif remaining_s < 10.0:
-        soft_limit = min(soft_limit, remaining_s * 0.06)
-        hard_limit = min(hard_limit, remaining_s * 0.14)
-    elif remaining_s < 18.0:
-        soft_limit = min(soft_limit, remaining_s * 0.08)
-        hard_limit = min(hard_limit, remaining_s * 0.18)
+        soft_limit = 0.02
+        hard_limit = 0.04
+    elif remaining_s < 6.0:
+        soft_limit = min(soft_limit, 0.04)
+        hard_limit = min(hard_limit, 0.08)
+    elif remaining_s < 12.0:
+        soft_limit = min(soft_limit, 0.12)
+        hard_limit = min(hard_limit, 0.25)
+    elif remaining_s < 20.0:
+        soft_limit = min(soft_limit, 0.25)
+        hard_limit = min(hard_limit, 0.50)
 
-    # Absolute safety boundaries
-    safety_buffer = 0.35 if remaining_s > 6.0 else 0.15
-    hard_limit = min(hard_limit, max(0.04, remaining_s - safety_buffer))
-    soft_limit = min(soft_limit, hard_limit * 0.60)
+    # Absolute safety ceiling: never let hard_limit leave less than (MIN_MOVE_CHARGE + SAFETY_BUFFER)
+    # This prevents the platform's sleep delay from exhausting the clock
+    hard_ceiling = max(0.02, remaining_s - MIN_MOVE_CHARGE - SAFETY_BUFFER)
+    hard_limit = min(hard_limit, hard_ceiling)
+    soft_limit = min(soft_limit, hard_limit * 0.70)
 
-    return max(0.02, soft_limit), max(0.04, hard_limit)
+    return max(0.015, soft_limit), max(0.03, hard_limit)

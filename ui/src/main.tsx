@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ArenaView } from "./components/ArenaView";
 import { BenchmarkView } from "./components/BenchmarkView";
 import { BotManagerView } from "./components/BotManagerView";
+import { HistoryView } from "./components/HistoryView";
 import { PlayView } from "./components/PlayView";
 import { ChessPosition, Color, GameState, ManagedBot } from "./types";
 import "./styles.css";
@@ -22,7 +23,8 @@ const emptyGame: GameState = {
 };
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<"benchmark" | "bots" | "arena" | "play">("benchmark");
+  const [activeTab, setActiveTab] = useState<"benchmark" | "bots" | "arena" | "play" | "history">("benchmark");
+  const [historyReplayFile, setHistoryReplayFile] = useState<string | null>(null);
   const [bots, setBots] = useState<ManagedBot[]>([]);
   const [positions, setPositions] = useState<ChessPosition[]>([]);
   const [selectedBotId, setSelectedBotId] = useState<string>("");
@@ -248,6 +250,12 @@ export function App() {
           >
             ♟️ Đấu Với Bot
           </button>
+          <button
+            className={`nav-tab ${activeTab === "history" ? "active" : ""}`}
+            onClick={() => setActiveTab("history")}
+          >
+            📜 Lịch Sử Ván Đấu
+          </button>
         </nav>
 
         {/* STATUS INDICATORS */}
@@ -298,6 +306,10 @@ export function App() {
             arenaSessionEvent={arenaSessionEvent}
             arenaLiveEvent={arenaLiveEvent}
             onRefreshPositions={refreshPositions}
+            onViewReplay={(filename) => {
+              setHistoryReplayFile(filename);
+              setActiveTab("history");
+            }}
           />
         )}
 
@@ -310,6 +322,13 @@ export function App() {
             onStartGame={handleStartGame}
             onStopGame={handleStopGame}
             onMove={handleMove}
+          />
+        )}
+
+        {activeTab === "history" && (
+          <HistoryView
+            initialFilename={historyReplayFile}
+            onClearInitialFilename={() => setHistoryReplayFile(null)}
           />
         )}
       </main>
