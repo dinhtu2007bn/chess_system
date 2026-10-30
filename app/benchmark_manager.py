@@ -432,10 +432,11 @@ class BenchmarkRunner:
         bot_move_times: list[int] = []
         moves_played: list[str] = []
         move_history_records: list[dict[str, Any]] = []
-        result = "1/2-1/2"
-        termination = "normal"
-        bot_outcome = "draw"
+        result = "*"
+        termination = "stopped"
+        bot_outcome = "unknown"
         is_timeout = False
+        saved_pgn = False
 
         # Broadcast initial board state for this game
         await self._broadcast_live_step(
@@ -655,35 +656,51 @@ class BenchmarkRunner:
                     break
 
         finally:
-            await bot_proc.stop()
+            try:
+                await bot_proc.stop()
+            except Exception:
+                pass
             if opp_proc:
-                await opp_proc.stop()
+                try:
+                    await opp_proc.stop()
+                except Exception:
+                    pass
             if engine_opponent:
-                await engine_opponent.stop()
+                try:
+                    await engine_opponent.stop()
+                except Exception:
+                    pass
+
+            # GUARANTEED SAVE TO HISTORY MATCHES (PGN FORMAT)
+            # Saves even if stopped/cancelled, preserving all moves played so far
+            if not saved_pgn:
+                saved_pgn = True
+                sess = self.active_session or {}
+                white_player = sess.get("bot_name", "Student Bot") if bot_is_white else sess.get("opponent_name", "Opponent")
+                black_player = sess.get("opponent_name", "Opponent") if bot_is_white else sess.get("bot_name", "Student Bot")
+                final_result = result if (result != "*" or len(moves_played) > 0) else "*"
+                final_term = termination if (termination != "stopped" or len(moves_played) > 0) else "stopped"
+                try:
+                    res_info = save_match_pgn(
+                        session_type="benchmark",
+                        session_id=sess.get("id", "benchmark"),
+                        match_id=f"{pos_id}_r{run_num}",
+                        white_name=white_player,
+                        black_name=black_player,
+                        chess960_id=chess960_id,
+                        initial_fen=fen,
+                        moves=moves_played,
+                        result=final_result,
+                        termination=final_term,
+                        time_control=f"{sess.get('game_time_seconds', 60)}+{sess.get('increment_seconds', 1)}",
+                        move_details=move_history_records,
+                    )
+                    print(f"[History] Da luu van Benchmark: {res_info.get('filename')} ({len(moves_played)} nuoc)")
+                except Exception as pgn_err:
+                    print(f"[Warning] Failed to save benchmark PGN: {pgn_err}")
 
         avg_time = sum(bot_move_times) / len(bot_move_times) if bot_move_times else 0.0
         peak_time = max(bot_move_times) if bot_move_times else 0.0
-
-        # Save game to history matches (PGN format)
-        white_player = session["bot_name"] if bot_is_white else session["opponent_name"]
-        black_player = session["opponent_name"] if bot_is_white else session["bot_name"]
-        try:
-            save_match_pgn(
-                session_type="benchmark",
-                session_id=session.get("id", "benchmark"),
-                match_id=f"{pos_id}_r{run_num}",
-                white_name=white_player,
-                black_name=black_player,
-                chess960_id=chess960_id,
-                initial_fen=fen,
-                moves=moves_played,
-                result=result,
-                termination=termination,
-                time_control=f"{session.get('game_time_seconds', 60)}+{session.get('increment_seconds', 1)}",
-                move_details=move_history_records,
-            )
-        except Exception as pgn_err:
-            print(f"[Warning] Failed to save benchmark PGN: {pgn_err}")
 
         return {
             "game_id": f"{pos_id}-r{run_num}",
@@ -1078,10 +1095,11 @@ class ArenaRunner:
 
         moves_played: list[str] = []
         history_records: list[dict[str, Any]] = []
-        result = "1/2-1/2"
-        termination = "draw"
+        result = "*"
+        termination = "stopped"
         is_timeout = False
         loser_id = None
+        saved_pgn = False
 
         # Set initial live board state and broadcast
         initial_live_board = {
@@ -1303,34 +1321,40 @@ class ArenaRunner:
                     pass
             await asyncio.gather(w_proc.stop(), b_proc.stop(), return_exceptions=True)
 
-        if self.active_session:
-            if "live_boards" in self.active_session and str(slot_id) in self.active_session["live_boards"]:
-                self.active_session["live_boards"][str(slot_id)]["status"] = "finished"
-                self.active_session["live_boards"][str(slot_id)]["result"] = result
-                self.active_session["live_boards"][str(slot_id)]["termination"] = termination
-            if "live_board" in self.active_session and (slot_id == 0 or self.active_session.get("concurrency", 1) == 1):
-                self.active_session["live_board"]["status"] = "finished"
-                self.active_session["live_board"]["result"] = result
-                self.active_session["live_board"]["termination"] = termination
+            if self.active_session:
+                if "live_boards" in self.active_session and str(slot_id) in self.active_session["live_boards"]:
+                    self.active_session["live_boards"][str(slot_id)]["status"] = "finished"
+                    self.active_session["live_boards"][str(slot_id)]["result"] = result
+                    self.active_session["live_boards"][str(slot_id)]["termination"] = termination
+                if "live_board" in self.active_session and (slot_id == 0 or self.active_session.get("concurrency", 1) == 1):
+                    self.active_session["live_board"]["status"] = "finished"
+                    self.active_session["live_board"]["result"] = result
+                    self.active_session["live_board"]["termination"] = termination
 
-        # Save match to history matches (PGN format)
-        try:
-            save_match_pgn(
-                session_type="arena",
-                session_id=self.active_session.get("id", "arena") if self.active_session else "arena",
-                match_id=match.get("match_id", 1),
-                white_name=match.get("white_bot_name", "White Bot"),
-                black_name=match.get("black_bot_name", "Black Bot"),
-                chess960_id=chess960_id,
-                initial_fen=fen,
-                moves=moves_played,
-                result=result,
-                termination=termination,
-                time_control=f"{time_ms // 1000}+{inc_ms // 1000}",
-                move_details=history_records,
-            )
-        except Exception as pgn_err:
-            print(f"[Warning] Failed to save arena PGN: {pgn_err}")
+            # GUARANTEED SAVE TO HISTORY MATCHES (PGN FORMAT)
+            # Saves even if stopped/cancelled, preserving all moves played so far
+            if not saved_pgn:
+                saved_pgn = True
+                final_result = result if (result != "*" or len(moves_played) > 0) else "*"
+                final_term = termination if (termination != "stopped" or len(moves_played) > 0) else "stopped"
+                try:
+                    res_info = save_match_pgn(
+                        session_type="arena",
+                        session_id=self.active_session.get("id", "arena") if self.active_session else "arena",
+                        match_id=match.get("match_id", 1),
+                        white_name=match.get("white_bot_name", "White Bot"),
+                        black_name=match.get("black_bot_name", "Black Bot"),
+                        chess960_id=chess960_id,
+                        initial_fen=fen,
+                        moves=moves_played,
+                        result=final_result,
+                        termination=final_term,
+                        time_control=f"{time_ms // 1000}+{inc_ms // 1000}",
+                        move_details=history_records,
+                    )
+                    print(f"[History] Da luu van Arena: {res_info.get('filename')} ({len(moves_played)} nuoc)")
+                except Exception as pgn_err:
+                    print(f"[Warning] Failed to save arena PGN: {pgn_err}")
 
         return {
             "result": result,
