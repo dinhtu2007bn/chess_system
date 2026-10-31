@@ -1,0 +1,41 @@
+[Event "Đấu Trường Nội Bộ: Bot Test (Tuned Master Engine) vs Bot V9 (Grandmaster Shield)(mạnh)"]
+[Site "ChessLab 960 System"]
+[Date "2026.10.31"]
+[Round "19"]
+[White "Bot Test (Tuned Master Engine)"]
+[Black "Bot V9 (Grandmaster Shield)(mạnh)"]
+[Result "1/2-1/2"]
+[FEN "rkrnnqbb/pppppppp/8/8/8/8/PPPPPPPP/RKRNNQBB w CAca - 0 1"]
+[SetUp "1"]
+[Variant "Chess960"]
+[Time "22:07:06"]
+[Chess960Id "959"]
+[Termination "draw"]
+[TimeControl "30+0"]
+[SessionId "arena-20261031-220201"]
+[Mode "arena"]
+
+1. Nd3 { [500ms] } 1... Nc6 { [500ms] } 2. Ne3 { [500ms] } 2... Nd6 { [485ms] }
+3. Nc5 { [500ms] } 3... Rd8 { [515ms] } 4. g4 { [485ms] } 4... g5 { [500ms] }
+5. f4 { [640ms] } 5... Qg7 { [688ms] } 6. Nd3 { [500ms] } 6... Nb4 { [515ms] }
+7. c3 { [516ms] } 7... Nxd3 { [594ms] } 8. exd3 { [515ms] } 8... f6 { [500ms] }
+9. Bd5 { [500ms] } 9... Bxd5 { [719ms] } 10. Nxd5 { [656ms] } 10... e6
+{ [531ms] } 11. Ne3 { [516ms] } 11... f5 { [781ms] } 12. gxf5 { [531ms] } 12...
+Nxf5 { [500ms] } 13. Nxf5 { [500ms] } 13... exf5 { [516ms] } 14. Be3
+{ [875ms] } 14... g4 { [500ms] } 15. d4 { [515ms] } 15... Qh6 { [500ms] } 16.
+Qg2 { [625ms] } 16... d5 { [516ms] } 17. Qe2 { [750ms] } 17... Bf6 { [563ms] }
+18. Re1 { [812ms] } 18... Re8 { [515ms] } 19. Qb5 { [610ms] } 19... Rd8
+{ [515ms] } 20. Qe2 { [657ms] } 20... Bh4 { [515ms] } 21. Bf2 { [500ms] } 21...
+Bxf2 { [516ms] } 22. Qxf2 { [640ms] } 22... Qb6 { [500ms] } 23. Qe3 { [516ms] }
+23... h6 { [500ms] } 24. Qe7 { [516ms] } 24... Qd6 { [515ms] } 25. Qxd6
+{ [750ms] } 25... cxd6 { [516ms] } 26. Re6 { [500ms] } 26... Kc7 { [516ms] }
+27. Rxh6 { [500ms] } 27... Rh8 { [500ms] } 28. Rf6 { [500ms] } 28... Rxh2
+{ [515ms] } 29. Kc2 { [485ms] } 29... Rh5 { [515ms] } 30. Rf7+ { [485ms] }
+30... Kc6 { [515ms] } 31. Re1 { [485ms] } 31... g3 { [485ms] } 32. Rg7
+{ [515ms] } 32... Rh3 { [485ms] } 33. Rg1 { [500ms] } 33... Rh4 { [515ms] } 34.
+R1xg3 { [500ms] } 34... Rxf4 { [500ms] } 35. Rg2 { [485ms] } 35... Rf1
+{ [500ms] } 36. Rg1 { [500ms] } 36... Rxg1 { [500ms] } 37. Rxg1 { [515ms] }
+37... f4 { [500ms] } 38. Rf1 { [485ms] } 38... Rf8 { [515ms] } 39. Kd3
+{ [485ms] } 39... Rf7 { [515ms] } 40. Rf3 { [485ms] } 40... Rf8 { [515ms] } 41.
+Rf1 { [516ms] } 41... Rf7 { [500ms] } 42. Rf3 { [500ms] } 42... Rf8 { [516ms] }
+1/2-1/2

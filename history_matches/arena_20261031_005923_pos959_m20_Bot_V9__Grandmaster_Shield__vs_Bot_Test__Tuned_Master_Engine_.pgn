@@ -1,0 +1,39 @@
+[Event "Đấu Trường Nội Bộ: Bot V9 (Grandmaster Shield) vs Bot Test (Tuned Master Engine)"]
+[Site "ChessLab 960 System"]
+[Date "2026.10.31"]
+[Round "20"]
+[White "Bot V9 (Grandmaster Shield)"]
+[Black "Bot Test (Tuned Master Engine)"]
+[Result "0-1"]
+[FEN "rkrnnqbb/pppppppp/8/8/8/8/PPPPPPPP/RKRNNQBB w CAca - 0 1"]
+[SetUp "1"]
+[Variant "Chess960"]
+[Time "00:59:23"]
+[Chess960Id "959"]
+[Termination "checkmate"]
+[TimeControl "60+0"]
+[SessionId "arena-20261031-004706"]
+[Mode "arena"]
+
+1. Ne3 { [1953ms] } 1... Ne6 { [922ms] } 2. Nd3 { [1047ms] } 2... g5
+{ [1609ms] } 3. g4 { [1891ms] } 3... Nd6 { [922ms] } 4. f4 { [812ms] } 4... h6
+{ [688ms] } 5. f5 { [1187ms] } 5... Nd4 { [485ms] } 6. Nc5 { [1703ms] } 6...
+Rd8 { [672ms] } 7. Qg2 { [1906ms] } 7... c6 { [1687ms] } 8. c3 { [875ms] } 8...
+N4b5 { [1422ms] } 9. d4 { [984ms] } 9... e5 { [1063ms] } 10. fxe6 { [1109ms] }
+10... Bh7+ { [1906ms] } 11. Nc2 { [1500ms] } 11... dxe6 { [750ms] } 12. Nxb7
+{ [1547ms] } 12... Be4 { [1563ms] } 13. Nxd8 { [1297ms] } 13... Bxg2
+{ [937ms] } 14. Bxg2 { [735ms] } 14... Qxd8 { [2015ms] } 15. Nb4 { [1110ms] }
+15... Kc7 { [1453ms] } 16. Nxc6 { [515ms] } 16... Qf6 { [1907ms] } 17. a4
+{ [812ms] } 17... Qf4 { [1265ms] } 18. Bf3 { [1125ms] } 18... Nxc3+
+{ [1453ms] } 19. bxc3 { [547ms] } 19... Ne4 { [1141ms] } 20. Nb4 { [594ms] }
+20... a5 { [1203ms] } 21. Nc2 { [515ms] } 21... Rb8+ { [735ms] } 22. Nb4
+{ [609ms] } 22... Kd7 { [781ms] } 23. Rc2 { [860ms] } 23... axb4 { [1297ms] }
+24. cxb4 { [547ms] } 24... Rxb4+ { [1578ms] } 25. Ka2 { [1281ms] } 25... Rxa4+
+{ [1469ms] } 26. Kb1 { [515ms] } 26... Qb8+ { [1110ms] } 27. Rb2 { [562ms] }
+27... Nd2+ { [1047ms] } 28. Kc2 { [797ms] } 28... Rc4+ { [1047ms] } 29. Kd3
+{ [1484ms] } 29... Qxb2 { [500ms] } 30. Ra7+ { [1063ms] } 30... Kd6 { [578ms] }
+31. Ra6+ { [1562ms] } 31... Ke7 { [485ms] } 32. Ra7+ { [703ms] } 32... Kf6
+{ [1172ms] } 33. Rxf7+ { [1281ms] } 33... Kxf7 { [953ms] } 34. e3 { [516ms] }
+34... Rc3+ { [500ms] } 35. Ke2 { [515ms] } 35... Nc4+ { [485ms] } 36. Ke1
+{ [515ms] } 36... Rc1+ { [500ms] } 37. Bd1 { [516ms] } 37... Qd2+ { [516ms] }
+38. Kf1 { [515ms] } 38... Rxd1# { [516ms] } 0-1

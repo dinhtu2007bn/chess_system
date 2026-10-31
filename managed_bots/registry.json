@@ -82,7 +82,7 @@
     },
     {
       "id": "bot_v9",
-      "name": "Bot V9 (Grandmaster Shield)",
+      "name": "Bot V9 (Grandmaster Shield)(mạnh)",
       "dir_name": "bot_v9",
       "created_at": "2026-10-28T16:00:00.000000+00:00",
       "is_default": false,
@@ -95,6 +95,14 @@
       "created_at": "2026-10-30T14:25:00.000000+00:00",
       "is_default": false,
       "description": "Bot V10: Phiên bản bot_test tiền nhiệm kết hợp cắt tỉa V9 với đánh giá Bot Son, sửa Quiescence Stalemate, thêm Mop-Up Evaluation và mở rộng Pawn Push."
+    },
+    {
+      "id": "bot_v11",
+      "name": "Bot V11 (Golden Window Master)(mạnh)",
+      "dir_name": "bot_v11",
+      "created_at": "2026-10-31T03:55:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot V11 Master: Phiên bản bot_test tiền nhiệm thắng áp đảo Bot V9 24-14 (12-6 ở 60s, 12-8 ở 30s). Sử dụng Bitboard scan 16,200 evals/sec, bảo vệ PV Node, Cửa Sổ Vàng 500ms."
     },
     {
       "id": "bot_test",

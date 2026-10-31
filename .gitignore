@@ -14,3 +14,4 @@ engines/*.exe
 .uv_cache/
 .npm_cache/
 cloudflared.exe
+history_matches/*.pgn

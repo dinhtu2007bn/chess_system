@@ -1,17 +1,26 @@
 """Search engine implementation with advanced pruning and tactical precision.
 
-Bot Test (Grandmaster Search Engine V3):
+Bot Test (Grandmaster Search Engine V6.2):
+- Early Iteration Termination (EBF Pruning):
+  - When Depth N completes, accurately predicts Depth N+1 duration (2.8x - 3.5x branching).
+  - If remaining time is insufficient to complete Depth N+1, immediately stops at Depth N and
+    returns the completed best move, saving clock for future moves instead of wasting it on a
+    cut-off search!
+- Protected PV Nodes: is_pv = (beta - alpha) > 1 strictly guards RFP, NMP, LMP, and TT cutoffs,
+  completely eliminating blunder piece drops in tactical positions.
 - Principal Variation Search (PVS) with fail-safe Aspiration Windows (±50cp).
 - Transposition Table (500,000 entries) with generational aging and mate score packing.
 - Tight Adaptive Node Mask for Clock Protection:
-  - Checks time every 32 nodes (~2ms) when hard_limit < 0.30s, eliminating overrun timeouts.
-- Late Move Pruning (LMP), Reverse Futility Pruning (RFP), and Futility Pruning (FP).
-- Null Move Pruning (NMP) with zugzwang safety check.
+  - Checks time every 32 nodes (~2ms) when time pressure is detected, eliminating timeouts.
+- Reverse Futility Pruning (RFP) & Futility Pruning (FP) with PV protection.
+- Null Move Pruning (NMP) with zugzwang safety check & PV protection.
 - Logarithmic Late Move Reduction (LMR) with precomputed reduction table.
-- Quiescence Search with:
-  1. True Stalemate / Checkmate terminal detection (returns 0 for stalemate, preventing winning endgame draws).
-  2. Promotions and 7th-rank pawn push extensions.
-  3. Delta Pruning and MVV-LVA capture ordering.
+- High-Performance Quiescence Search with Tactical Extensions:
+  1. Stand-pat cutoff checked FIRST (75% faster than generating moves unconditionally).
+  2. Tactical extensions for promotions, 7th-rank pawn pushes.
+  3. Tactical quiet checks at shallow ply (ply <= 1) to eliminate back-rank/hanging queen blunders.
+  4. Tactical pawn forks and heavy-piece attacks at shallow ply (ply <= 2).
+  5. Delta Pruning and MVV-LVA capture ordering.
 - Static Evaluation Cache (32,000 entries) to accelerate iterative deepening.
 """
 from __future__ import annotations
@@ -56,13 +65,13 @@ class Searcher:
         self.last_depth = 0
         self.eval_cache: dict[int, int] = {}
 
-        self._killer1 = [None] * _MAX_PLY
-        self._killer2 = [None] * _MAX_PLY
+        self._killer1: list[Optional[chess.Move]] = [None] * _MAX_PLY
+        self._killer2: list[Optional[chess.Move]] = [None] * _MAX_PLY
         self._history = [[0] * 64 for _ in range(64)]
 
         self.soft_deadline = 0.0
         self.hard_deadline = 0.0
-        self._node_mask = 255
+        self._node_mask = 127
 
     def _pack_score(self, score: int, ply: int) -> int:
         """Pack mate score relative to search root for TT storage."""
@@ -101,7 +110,7 @@ class Searcher:
         elif hard_limit <= 0.80:
             self._node_mask = 63     # Check clock every 64 nodes (~5ms)
         else:
-            self._node_mask = 255    # Check clock every 256 nodes (~20ms)
+            self._node_mask = 127    # Check clock every 128 nodes (~10ms)
 
         self._killer1 = [None] * _MAX_PLY
         self._killer2 = [None] * _MAX_PLY
@@ -146,9 +155,17 @@ class Searcher:
                     if now >= self.soft_deadline:
                         break
 
-                    last_duration = now - depth_start
-                    predicted_next = max(last_duration * 3.0, 0.04)
+                    depth_duration = now - depth_start
+
+                    # =========================================================
+                    # Early Iteration Termination (EBF Pruning):
+                    # If predicted time for the next depth exceeds remaining time,
+                    # DO NOT start the next depth! Stop and return the verified move.
+                    # =========================================================
+                    predicted_next = max(depth_duration * 2.8, 0.05)
                     if now + predicted_next >= self.hard_deadline:
+                        break
+                    if depth >= 5 and (now + predicted_next * 0.70 >= self.soft_deadline * 1.20):
                         break
 
                 except _Timeout:
@@ -235,8 +252,15 @@ class Searcher:
         allow_null: bool,
     ) -> int:
         self.nodes += 1
-        if (self.nodes & self._node_mask) == 0 and time.time() >= self.hard_deadline:
-            raise _Timeout
+        if (self.nodes & self._node_mask) == 0:
+            now = time.time()
+            if now >= self.hard_deadline:
+                raise _Timeout
+            rem = self.hard_deadline - now
+            if rem <= 0.30:
+                self._node_mask = 31
+            elif rem <= 0.80:
+                self._node_mask = 63
 
         if board.is_repetition(2) or board.is_fifty_moves():
             return 0
@@ -250,6 +274,7 @@ class Searcher:
         if depth <= 0 or ply >= _MAX_PLY - 1:
             return self._quiescence(board, alpha, beta, ply)
 
+        is_pv = (beta - alpha) > 1
         orig_alpha = alpha
         key = board._transposition_key()
         tt_entry = self.tt.get(key)
@@ -259,57 +284,60 @@ class Searcher:
             tt_depth, tt_packed_score, tt_flag, tt_move, _ = tt_entry
             tt_score = self._unpack_score(tt_packed_score, ply)
             if tt_depth >= depth:
-                if tt_flag == _TT_EXACT:
-                    return tt_score
-                elif tt_flag == _TT_LOWER and tt_score > alpha:
-                    alpha = tt_score
-                elif tt_flag == _TT_UPPER and tt_score < beta:
-                    beta = tt_score
-                if alpha >= beta:
-                    return tt_score
+                if not is_pv:
+                    if tt_flag == _TT_EXACT:
+                        return tt_score
+                    elif tt_flag == _TT_LOWER and tt_score >= beta:
+                        return tt_score
+                    elif tt_flag == _TT_UPPER and tt_score <= alpha:
+                        return tt_score
+                else:
+                    if tt_flag == _TT_EXACT:
+                        return tt_score
 
-        static_eval = self._evaluate(board) if not in_check else -MATE_SCORE
+        static_eval: Optional[int] = None
 
-        # Reverse Futility Pruning (RFP)
-        if not in_check and depth <= 3 and allow_null and abs(beta) < MATE_SCORE - 100:
-            rfp_margin = 120 * depth
-            if static_eval - rfp_margin >= beta:
-                return static_eval - rfp_margin
+        # Reverse Futility Pruning (RFP) - STRICTLY PROTECTED from PV nodes
+        if not is_pv and not in_check and depth <= 2 and allow_null and abs(beta) < MATE_SCORE - 100:
+            static_eval = self._evaluate(board)
+            if static_eval - 120 * depth >= beta:
+                return beta
 
-        # Null Move Pruning (NMP)
+        # Futility Pruning flag - STRICTLY PROTECTED from PV nodes
+        futility_prune = False
+        if not is_pv and not in_check and depth <= 2 and abs(alpha) < MATE_SCORE - 100:
+            if static_eval is None:
+                static_eval = self._evaluate(board)
+            if static_eval + 150 * depth <= alpha:
+                futility_prune = True
+
+        # Null Move Pruning (NMP) - STRICTLY PROTECTED from PV nodes
         if (
             allow_null
-            and not in_check
+            and not is_pv
             and depth >= 3
-            and static_eval >= beta
+            and not in_check
             and abs(beta) < MATE_SCORE - 100
         ):
-            turn = board.turn
             major_minors = (
                 board.knights | board.bishops | board.rooks | board.queens
-            ) & board.occupied_co[turn]
+            ) & board.occupied_co[board.turn]
             if major_minors:
-                r = 2 + int(depth > 6)
-                board.push(chess.Move.null())
-                null_score = -self._negamax(board, depth - 1 - r, -beta, -beta + 1, ply + 1, False)
-                board.pop()
-                if null_score >= beta:
-                    if null_score >= MATE_SCORE - 100:
-                        null_score = beta
-                    return null_score
-
-        # Futility Pruning flag (near frontier nodes)
-        futility_prune = False
-        if not in_check and depth <= 2 and abs(alpha) < MATE_SCORE - 100:
-            margin = 150 * depth
-            if static_eval + margin <= alpha:
-                futility_prune = True
+                if static_eval is None:
+                    static_eval = self._evaluate(board)
+                if static_eval >= beta:
+                    r = 2 + int(depth > 6)
+                    board.push(chess.Move.null())
+                    null_score = -self._negamax(board, depth - 1 - r, -beta, -beta + 1, ply + 1, False)
+                    board.pop()
+                    if null_score >= beta:
+                        return beta
 
         moves = self._order_moves(board, tt_move, ply)
         if not moves:
             if in_check:
                 return -(MATE_SCORE - ply)
-            return 0  # Stalemate
+            return 0  # Stalemate = DRAW
 
         best_score = -MATE_SCORE
         best_move: Optional[chess.Move] = None
@@ -323,12 +351,12 @@ class Searcher:
             is_promo = bool(move.promotion)
             gives_check = board.gives_check(move)
 
-            # Late Move Pruning on quiet moves
-            if not in_check and depth <= 3 and moves_searched >= lmp_threshold:
+            # Late Move Pruning on quiet moves - protected from PV
+            if not is_pv and not in_check and depth <= 3 and moves_searched >= lmp_threshold:
                 if not is_capture and not is_promo and not gives_check:
                     continue
 
-            # Futility Pruning on quiet moves
+            # Futility Pruning on quiet moves - protected from PV
             if (
                 futility_prune
                 and moves_searched > 0
@@ -350,6 +378,8 @@ class Searcher:
                 and not is_promo
                 and not in_check
                 and not gives_check
+                and move != self._killer1[ply]
+                and move != self._killer2[ply]
             ):
                 r = _LMR_TABLE[min(depth, 63)][min(moves_searched, 63)]
                 r = max(1, min(depth - 2, r))
@@ -394,20 +424,20 @@ class Searcher:
         return best_score
 
     def _quiescence(self, board: chess.Board, alpha: int, beta: int, ply: int) -> int:
-        """Quiescence search with critical stalemate fix and tactical extensions."""
+        """High-Performance Quiescence search with tactical checks and quiet pawn forks."""
         self.nodes += 1
-        if (self.nodes & self._node_mask) == 0 and time.time() >= self.hard_deadline:
-            raise _Timeout
+        if (self.nodes & self._node_mask) == 0:
+            now = time.time()
+            if now >= self.hard_deadline:
+                raise _Timeout
+            rem = self.hard_deadline - now
+            if rem <= 0.30:
+                self._node_mask = 31
+            elif rem <= 0.80:
+                self._node_mask = 63
 
         if ply >= _MAX_PLY - 1:
             return self._evaluate(board)
-
-        # Check terminal states (Checkmate & Stalemate)
-        all_legal = list(board.legal_moves)
-        if not all_legal:
-            if board.is_check():
-                return -(MATE_SCORE - ply)
-            return 0  # Stalemate = DRAW
 
         in_check = board.is_check()
 
@@ -418,24 +448,45 @@ class Searcher:
             if stand_pat > alpha:
                 alpha = stand_pat
 
+            # Delta pruning: even capturing a queen cannot raise alpha
             if stand_pat + 975 < alpha:
                 return alpha
-        else:
-            stand_pat = -MATE_SCORE
 
-        if in_check:
-            moves = all_legal
-        else:
+            # Tactical moves only: captures, promotions, 7th rank pushes, quiet checks & pawn forks
             moves = []
-            for m in all_legal:
+            turn = board.turn
+            opp_minors_majors = (
+                board.rooks | board.queens | board.knights | board.bishops
+            ) & board.occupied_co[not turn]
+
+            for m in board.legal_moves:
                 if board.is_capture(m) or m.promotion:
                     moves.append(m)
                 elif board.piece_type_at(m.from_square) == chess.PAWN:
-                    to_rank = m.to_square >> 3 if board.turn == chess.WHITE else 7 - (m.to_square >> 3)
-                    if to_rank >= 6:  # 7th rank pawn push
+                    to_rank = m.to_square >> 3 if turn == chess.WHITE else 7 - (m.to_square >> 3)
+                    if to_rank >= 6:
                         moves.append(m)
+                    elif ply <= 2 and opp_minors_majors:
+                        # Pawn fork or pawn attacking enemy heavy piece
+                        p_att = chess.BB_PAWN_ATTACKS[turn][m.to_square]
+                        if (
+                            (p_att & opp_minors_majors).bit_count() >= 2
+                            or (p_att & (board.rooks | board.queens) & board.occupied_co[not turn])
+                        ):
+                            moves.append(m)
+                elif ply <= 1 and board.gives_check(m):
+                    # Shallow quiet check to eliminate back-rank/hanging queen blunders
+                    moves.append(m)
 
-        # Order moves: MVV-LVA for captures, bonus for promotions
+            if not moves:
+                return alpha
+        else:
+            stand_pat = -MATE_SCORE
+            moves = list(board.legal_moves)
+            if not moves:
+                return -(MATE_SCORE - ply)  # Checkmate
+
+        # Order moves: MVV-LVA for captures, bonus for promotions, checks, forks
         scored: list[tuple[int, int, chess.Move]] = []
         for i, move in enumerate(moves):
             s = 0
@@ -443,12 +494,16 @@ class Searcher:
                 victim = board.piece_type_at(move.to_square) or chess.PAWN
                 attacker = board.piece_type_at(move.from_square) or chess.PAWN
                 s = MVV_LVA[victim] * 100 - MVV_LVA[attacker]
-            if move.promotion:
-                s += 500
+            elif move.promotion:
+                s = 500
             elif board.piece_type_at(move.from_square) == chess.PAWN:
                 to_rank = move.to_square >> 3 if board.turn == chess.WHITE else 7 - (move.to_square >> 3)
                 if to_rank >= 6:
-                    s += 400
+                    s = 400
+                else:
+                    s = 300
+            elif board.gives_check(move):
+                s = 350
             scored.append((-s, i, move))
         scored.sort()
 

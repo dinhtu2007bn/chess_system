@@ -1,0 +1,48 @@
+[Event "Đấu Trường Nội Bộ: Bot Test (Tuned Master Engine) vs Bot V9 (Grandmaster Shield)(mạnh)"]
+[Site "ChessLab 960 System"]
+[Date "2026.10.31"]
+[Round "13"]
+[White "Bot Test (Tuned Master Engine)"]
+[Black "Bot V9 (Grandmaster Shield)(mạnh)"]
+[Result "0-1"]
+[FEN "rbnqkrbn/pppppppp/8/8/8/8/PPPPPPPP/RBNQKRBN w FAfa - 0 1"]
+[SetUp "1"]
+[Variant "Chess960"]
+[Time "22:05:38"]
+[Chess960Id "620"]
+[Termination "timeout"]
+[TimeControl "30+0"]
+[SessionId "arena-20261031-220201"]
+[Mode "arena"]
+
+1. Nd3 { [515ms] } 1... Ng6 { [516ms] } 2. Ng3 { [500ms] } 2... Nh4 { [500ms] }
+3. Nf4 { [516ms] } 3... e5 { [515ms] } 4. Ngh5 { [500ms] } 4... Qg5 { [922ms] }
+5. g3 { [672ms] } 5... Qxh5 { [516ms] } 6. gxh4 { [500ms] } 6... exf4
+{ [500ms] } 7. c4 { [515ms] } 7... Nd6 { [500ms] } 8. c5 { [875ms] } 8... Qxc5
+{ [781ms] } 9. f3 { [485ms] } 9... Qe5 { [672ms] } 10. Qb3 { [563ms] } 10... f6
+{ [515ms] } 11. Qc3 { [610ms] } 11... Qxc3 { [485ms] } 12. dxc3 { [515ms] }
+12... a6 { [641ms] } 13. Bd4 { [641ms] } 13... g6 { [515ms] } 14. Bd3
+{ [657ms] } 14... Bc4 { [500ms] } 15. Rg1 { [500ms] } 15... O-O { [500ms] } 16.
+Bxg6 { [671ms] } 16... hxg6 { [500ms] } 17. Rxg6+ { [500ms] } 17... Kh7
+{ [516ms] } 18. h5 { [563ms] } 18... Re8 { [515ms] } 19. Rg2 { [500ms] } 19...
+Kh6 { [500ms] } 20. b3 { [516ms] } 20... Rg8 { [515ms] } 21. Rg4 { [704ms] }
+21... Rxg4 { [515ms] } 22. fxg4 { [485ms] } 22... Be6 { [485ms] } 23. h3
+{ [515ms] } 23... f5 { [516ms] } 24. Bg7+ { [515ms] } 24... Kxg7 { [516ms] }
+25. g5 { [516ms] } 25... Ne4 { [500ms] } 26. h4 { [500ms] } 26... Nxc3
+{ [500ms] } 27. Kd2 { [515ms] } 27... Ne4+ { [500ms] } 28. Kd3 { [500ms] }
+28... d5 { [516ms] } 29. Rf1 { [500ms] } 29... c5 { [515ms] } 30. Rc1
+{ [500ms] } 30... Nf2+ { [485ms] } 31. Kd2 { [500ms] } 31... Bd6 { [515ms] }
+32. Rf1 { [485ms] } 32... Ne4+ { [500ms] } 33. Kc2 { [485ms] } 33... Rh8
+{ [500ms] } 34. h6+ { [500ms] } 34... Kh7 { [515ms] } 35. Kd3 { [500ms] } 35...
+c4+ { [500ms] } 36. Kc2 { [500ms] } 36... Rc8 { [500ms] } 37. Ra1 { [516ms] }
+37... cxb3+ { [500ms] } 38. Kxb3 { [500ms] } 38... d4+ { [515ms] } 39. Kb2
+{ [500ms] } 39... Nc3 { [485ms] } 40. Re1 { [500ms] } 40... Bc4 { [500ms] } 41.
+h5 { [515ms] } 41... Bxe2 { [500ms] } 42. Rh1 { [485ms] } 42... Be7 { [515ms] }
+43. Rg1 { [485ms] } 43... Bxh5 { [515ms] } 44. Rh1 { [500ms] } 44... Bg4
+{ [516ms] } 45. Kc2 { [500ms] } 45... f3 { [500ms] } 46. Kd3 { [500ms] } 46...
+Bxg5 { [516ms] } 47. Kxd4 { [515ms] } 47... Bxh6 { [500ms] } 48. Rf1
+{ [516ms] } 48... Bg7+ { [500ms] } 49. Kd3 { [500ms] } 49... Rd8+ { [500ms] }
+50. Kc2 { [516ms] } 50... Nxa2 { [500ms] } 51. Kb3 { [500ms] } 51... Nc3
+{ [515ms] } 52. Kc2 { [500ms] } 52... Kg6 { [516ms] } 53. Kb3 { [516ms] } 53...
+Nd5 { [515ms] } 54. Rf2 { [500ms] } 54... Kf6 { [500ms] } 55. Kc2 { [516ms] }
+55... Ke5 { [500ms] } 56. Kd2 { [500ms] } 56... Ke4 { [500ms] } 0-1

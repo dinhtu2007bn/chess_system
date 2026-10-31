@@ -1,14 +1,19 @@
-"""Dynamic time allocation for the remaining game clock.
+"""Dynamic time allocation scaling smoothly across arbitrary time controls.
 
-Bot Test (Grandmaster Calibrated Time Manager V3):
-- Platform Floor Aware: Protects and utilizes the mandatory 500ms platform delay per move.
-- Midgame-Heavy Allocation: Grants 1.5s - 2.5s in complex midgame (plies 10-50).
-- Platform Floor Alignment: Enforces soft_limit >= 0.42s whenever remaining_s > 0.5s to fully
-  exploit the 500ms platform sleep window without wasting clock.
-- Death Threshold (Ngưỡng Tử) Handling: When remaining_s <= 0.50s, timeout on the subsequent
-  move is guaranteed by the platform's 500ms floor. Instead of wasting this final move with
-  a 0.02s panic move, use all remaining clock (remaining_s - 0.02s) to search for checkmate or draw!
-- No Over-Throttling: When remaining_s > 0.5s, never throttle below 0.42s.
+Bot Test (Dynamic Tournament Time Manager V6.2):
+- Universal Time Scaling (30s, 60s, 180s - 360s random tournament clocks):
+  - Uses config.initial_time_ms and remaining game clock to dynamically size move budgets.
+  - In long games (180s - 360s, 2-6 mins), allocates 3s - 8s in critical midgames for Depth 9-11.
+  - In medium games (60s), allocates 1.0s - 1.8s in midgames for Depth 7-8.
+  - In short games (30s blitz), limits midgame allocation to 0.45s - 0.65s so the clock bank
+    comfortably lasts 50-60 moves (100-120 plies).
+- Platform Floor Synchronization (0.34s Golden Window):
+  - In late endgames or low clocks, never drops below 0.34s as long as clock permits.
+  - 0.34s thinking + ~0.08s latency = 0.42s turnaround <= 0.50s platform floor, ensuring
+    deep calculation (Depth 6-7) is maintained with ZERO accumulated platform debt.
+- Emergency Buffer:
+  - When remaining clock is <= 1.5s (only 1-3 moves left), glides down to 0.20s/0.05s to prevent
+    any platform delay timeout.
 """
 from __future__ import annotations
 
@@ -35,49 +40,47 @@ def get_time_limits(
         return 0.015, 0.03
 
     # =========================================================================
-    # 1. NGƯỠNG TỬ (DEATH THRESHOLD: remaining_s <= 0.50s)
-    # The platform charges max(0.50s, elapsed). Any move played with clock <= 0.50s
-    # will result in clock exhaustion (timeout) on or immediately after this turn.
-    # Therefore, on this final move, maximize thinking time to find mate or perpetual check!
+    # 1. EMERGENCY FAST ESCAPE (remaining_s <= 0.65s)
+    # Final move before clock expiry. Fast escape leaving safety buffer.
     # =========================================================================
-    if remaining_s <= 0.50:
-        hard_limit = max(0.03, remaining_s - 0.02)
-        soft_limit = max(0.02, remaining_s - 0.04)
+    if remaining_s <= 0.65:
+        hard_limit = max(0.04, remaining_s - 0.08)
+        soft_limit = max(0.03, hard_limit * 0.80)
         return soft_limit, hard_limit
 
     # =========================================================================
-    # 2. LOW CLOCK (0.50s < remaining_s <= 2.0s)
-    # Bot has 1 to 4 moves left. Each move is charged at least 0.50s.
-    # Allow thinking ~0.42s (within the 0.50s floor) with hard_limit capped before deadline.
+    # 2. LOW CLOCK BUFFER (0.65s < remaining_s <= 1.50s)
+    # Only 1-3 moves left on total clock. Quick move to ensure no platform forfeit.
     # =========================================================================
-    if remaining_s <= 2.0:
-        hard_limit = max(0.44, remaining_s - 0.05)
-        soft_limit = min(0.42, hard_limit * 0.85)
-        return max(0.02, soft_limit), max(0.03, hard_limit)
+    if remaining_s <= 1.50:
+        hard_limit = min(0.28, remaining_s - 0.50)
+        soft_limit = min(0.20, hard_limit * 0.80)
+        return max(0.05, soft_limit), max(0.08, hard_limit)
 
     # =========================================================================
-    # 3. NORMAL / MIDGAME ALLOCATION (remaining_s > 2.0s)
+    # 3. DYNAMIC TOURNAMENT TIME SCALING (remaining_s > 1.50s)
+    # Scales dynamically across all random match lengths (30s to 360s+).
     # =========================================================================
+    initial_s = (
+        float(config.initial_time_ms) / 1000.0
+        if config and config.initial_time_ms > 0
+        else max(remaining_s, 60.0)
+    )
+
+    # Estimate moves remaining (typical Chess960 games take 35-50 moves)
     plies_left = max(1, 300 - context.ply)
     turns_left = (plies_left + 1) // 2
     expected_moves = min(turns_left, max(18, 48 - (context.ply // 4)))
 
-    usable = max(0.0, remaining_s - 1.0)
+    # Reserve 10% clock buffer (up to 4.0s) for endgames
+    reserve = min(remaining_s * 0.10, 4.0)
+    usable = max(0.0, remaining_s - reserve)
     base = usable / expected_moves
-
-    # Phase-Aware weighting (like bot_v10):
-    ply = context.ply
-    if ply < 10:
-        phase_factor = 0.85
-    elif ply < 50:
-        phase_factor = 1.25   # Peak tactical investment in midgame
-    else:
-        phase_factor = 0.85
 
     # Tactical & King Danger complexity factor
     complexity = 1.0
     if board.is_check():
-        complexity += 0.35
+        complexity += 0.30
 
     king = board.king(board.turn)
     if king is not None:
@@ -91,23 +94,36 @@ def get_time_limits(
     elif num_legal <= 6:
         complexity *= 0.70
 
+    # Phase factor: invest heavily in critical midgames
+    ply = context.ply
+    if ply < 10:
+        phase_factor = 0.90
+    elif ply < 50:
+        phase_factor = 1.30   # Peak tactical investment
+    else:
+        phase_factor = 0.85
+
     computed_soft = base * complexity * phase_factor
 
-    # Floor-Aware: Always at least 0.42s (since platform charges 0.50s anyway),
-    # up to 2.5s in complex midgame!
-    if remaining_s > 10.0:
-        soft_limit = min(2.5, max(0.42, computed_soft))
-        hard_limit = min(3.8, soft_limit * 1.5)
-    elif remaining_s > 5.0:
-        soft_limit = min(1.2, max(0.42, computed_soft * 0.8))
-        hard_limit = min(1.8, soft_limit * 1.5)
-    else:  # 2.0 < remaining_s <= 5.0
-        soft_limit = 0.42
-        hard_limit = min(0.65, remaining_s - 0.15)
+    # Dynamic upper cap based on initial time control
+    if initial_s >= 120.0:        # 2m to 6m matches: allow 3s - 8s deep search
+        max_soft = min(8.0, remaining_s * 0.08)
+    elif initial_s >= 50.0:       # 60s - 90s matches: allow 1.2s - 2.0s
+        max_soft = min(2.0, remaining_s * 0.08)
+    else:                         # 30s blitz matches: keep midgame in check (0.45s - 0.65s)
+        max_soft = min(0.65, remaining_s * 0.08)
 
-    # Hard ceiling to guarantee no overrun
-    hard_ceiling = max(0.44, remaining_s - MIN_MOVE_CHARGE - 0.10)
+    max_soft = max(0.34, max_soft)
+
+    # The Golden Window floor (0.34s):
+    # Platform charges at least 0.50s per move anyway. Thinking less than 0.34s
+    # when clock is healthy wastes calculation depth without saving clock!
+    soft_limit = max(0.34, min(max_soft, computed_soft))
+    hard_limit = min(max_soft * 1.40, soft_limit * 1.35)
+
+    # Hard ceiling leaves safety margin against remaining clock
+    hard_ceiling = max(0.38, remaining_s - 1.0)
     hard_limit = min(hard_limit, hard_ceiling)
-    soft_limit = min(soft_limit, hard_limit * 0.80)
+    soft_limit = min(soft_limit, hard_limit * 0.85)
 
-    return max(0.42, soft_limit), max(0.44, hard_limit)
+    return max(0.34, soft_limit), max(0.38, hard_limit)

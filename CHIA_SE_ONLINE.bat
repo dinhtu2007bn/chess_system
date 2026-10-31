@@ -1,6 +1,6 @@
 @echo off
 title Chia Se Online - Chess960 Arena & Benchmark
-cd /d "D:\chess_system"
+cd /d "%~dp0"
 
 echo ================================================================
 echo   DANG TAO DUONG LINK ONLINE CHO BAN BE (CLOUDFLARE TUNNEL)
@@ -17,4 +17,3 @@ echo.
 cloudflared.exe tunnel --url http://127.0.0.1:8888
 
 pause
-

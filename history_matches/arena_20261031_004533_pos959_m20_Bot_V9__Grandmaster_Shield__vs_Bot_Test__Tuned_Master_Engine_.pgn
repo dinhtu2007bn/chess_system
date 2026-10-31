@@ -1,0 +1,27 @@
+[Event "Đấu Trường Nội Bộ: Bot V9 (Grandmaster Shield) vs Bot Test (Tuned Master Engine)"]
+[Site "ChessLab 960 System"]
+[Date "2026.10.31"]
+[Round "20"]
+[White "Bot V9 (Grandmaster Shield)"]
+[Black "Bot Test (Tuned Master Engine)"]
+[Result "0-1"]
+[FEN "rkrnnqbb/pppppppp/8/8/8/8/PPPPPPPP/RKRNNQBB w CAca - 0 1"]
+[SetUp "1"]
+[Variant "Chess960"]
+[Time "00:45:33"]
+[Chess960Id "959"]
+[Termination "checkmate"]
+[TimeControl "30+0"]
+[SessionId "arena-20261031-004025"]
+[Mode "arena"]
+
+1. Ne3 { [515ms] } 1... Ne6 { [625ms] } 2. Nd3 { [516ms] } 2... g5 { [516ms] }
+3. g4 { [515ms] } 3... Nd6 { [485ms] } 4. f4 { [515ms] } 4... h6 { [594ms] } 5.
+Nd5 { [516ms] } 5... Nd4 { [765ms] } 6. Ne5 { [672ms] } 6... Bxe5 { [1031ms] }
+7. fxe5 { [500ms] } 7... Nc4 { [579ms] } 8. Qe1 { [515ms] } 8... Nc6
+{ [953ms] } 9. d4 { [688ms] } 9... e6 { [500ms] } 10. Ne3 { [829ms] } 10...
+Nxe3 { [500ms] } 11. Bxe3 { [515ms] } 11... d5 { [516ms] } 12. Qf2 { [766ms] }
+12... Qb4 { [656ms] } 13. Rf1 { [532ms] } 13... Qc4 { [500ms] } 14. Bf3
+{ [515ms] } 14... Bh7 { [563ms] } 15. a3 { [500ms] } 15... Qxc2+ { [516ms] }
+16. Ka2 { [515ms] } 16... Nb4+ { [500ms] } 17. axb4 { [500ms] } 17... Qa4#
+{ [516ms] } 0-1

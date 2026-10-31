@@ -1,0 +1,37 @@
+[Event "Đấu Trường Nội Bộ: Bot V9 (Grandmaster Shield)(mạnh) vs Bot Test (Tuned Master Engine)"]
+[Site "ChessLab 960 System"]
+[Date "2026.10.31"]
+[Round "16"]
+[White "Bot V9 (Grandmaster Shield)(mạnh)"]
+[Black "Bot Test (Tuned Master Engine)"]
+[Result "0-1"]
+[FEN "rknnqbbr/pppppppp/8/8/8/8/PPPPPPPP/RKNNQBBR w HAha - 0 1"]
+[SetUp "1"]
+[Variant "Chess960"]
+[Time "22:06:20"]
+[Chess960Id "750"]
+[Termination "checkmate"]
+[TimeControl "30+0"]
+[SessionId "arena-20261031-220201"]
+[Mode "arena"]
+
+1. e4 { [640ms] } 1... e5 { [485ms] } 2. Nd3 { [625ms] } 2... Nd6 { [515ms] }
+3. Nc3 { [516ms] } 3... Nc6 { [516ms] } 4. f4 { [921ms] } 4... h6 { [672ms] }
+5. fxe5 { [922ms] } 5... Nc4 { [656ms] } 6. Nd5 { [797ms] } 6... Bh7
+{ [657ms] } 7. Bc5 { [485ms] } 7... Bxc5 { [515ms] } 8. Nxc5 { [625ms] } 8...
+N4xe5 { [500ms] } 9. Nb3 { [531ms] } 9... Ne7 { [516ms] } 10. Nxe7 { [515ms] }
+10... Qxe7 { [485ms] } 11. d4 { [781ms] } 11... Nc6 { [516ms] } 12. Bd3
+{ [500ms] } 12... d5 { [609ms] } 13. exd5 { [672ms] } 13... Qxe1+ { [515ms] }
+14. Rxe1 { [516ms] } 14... Bxd3 { [859ms] } 15. dxc6 { [485ms] } 15... Ba6
+{ [515ms] } 16. Nc5 { [516ms] } 16... Rd8 { [828ms] } 17. Nxa6+ { [516ms] }
+17... bxa6 { [750ms] } 18. Re4 { [515ms] } 18... f5 { [625ms] } 19. Re7
+{ [500ms] } 19... g5 { [485ms] } 20. O-O-O { [515ms] } 20... f4 { [891ms] } 21.
+Kb1 { [500ms] } 21... g4 { [875ms] } 22. d5 { [516ms] } 22... f3 { [500ms] }
+23. Rd2 { [515ms] } 23... Rf8 { [782ms] } 24. Rf2 { [515ms] } 24... O-O-O
+{ [516ms] } 25. Rg7 { [500ms] } 25... fxg2 { [500ms] } 26. Rxc7+ { [500ms] }
+26... Kxc7 { [515ms] } 27. d6+ { [500ms] } 27... Rxd6 { [500ms] } 28. a3
+{ [516ms] } 28... Rxf2 { [500ms] } 29. Ka2 { [500ms] } 29... Rxc2 { [531ms] }
+30. Kb3 { [500ms] } 30... Rdxc6 { [500ms] } 31. h3 { [516ms] } 31... gxh3
+{ [500ms] } 32. a4 { [515ms] } 32... h2 { [516ms] } 33. a5 { [485ms] } 33... h5
+{ [515ms] } 34. Ka3 { [500ms] } 34... h4 { [485ms] } 35. b4 { [515ms] } 35...
+R6c3+ { [516ms] } 36. Ka4 { [500ms] } 36... Ra2# { [500ms] } 0-1

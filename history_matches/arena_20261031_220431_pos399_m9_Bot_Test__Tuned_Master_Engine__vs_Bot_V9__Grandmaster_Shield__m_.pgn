@@ -1,0 +1,38 @@
+[Event "Đấu Trường Nội Bộ: Bot Test (Tuned Master Engine) vs Bot V9 (Grandmaster Shield)(mạnh)"]
+[Site "ChessLab 960 System"]
+[Date "2026.10.31"]
+[Round "9"]
+[White "Bot Test (Tuned Master Engine)"]
+[Black "Bot V9 (Grandmaster Shield)(mạnh)"]
+[Result "1-0"]
+[FEN "qrnnkrbb/pppppppp/8/8/8/8/PPPPPPPP/QRNNKRBB w FBfb - 0 1"]
+[SetUp "1"]
+[Variant "Chess960"]
+[Time "22:04:31"]
+[Chess960Id "399"]
+[Termination "checkmate"]
+[TimeControl "30+0"]
+[SessionId "arena-20261031-220201"]
+[Mode "arena"]
+
+1. Ne3 { [516ms] } 1... Nd6 { [515ms] } 2. Nd3 { [672ms] } 2... g5 { [828ms] }
+3. g4 { [500ms] } 3... Ne6 { [515ms] } 4. h3 { [516ms] } 4... h6 { [531ms] } 5.
+Bd5 { [672ms] } 5... O-O-O { [563ms] } 6. Bh2 { [625ms] } 6... Kb8 { [765ms] }
+7. Be5 { [578ms] } 7... Bh7 { [641ms] } 8. b4 { [547ms] } 8... Bxd3 { [547ms] }
+9. cxd3 { [640ms] } 9... Bxe5 { [500ms] } 10. Qxe5 { [485ms] } 10... c6
+{ [1015ms] } 11. Be4 { [844ms] } 11... Rfe8 { [531ms] } 12. d4 { [500ms] }
+12... f6 { [485ms] } 13. Qg3 { [687ms] } 13... Nxd4 { [516ms] } 14. Nc4
+{ [531ms] } 14... Kc8 { [750ms] } 15. Nxd6+ { [641ms] } 15... exd6 { [515ms] }
+16. Qd3 { [579ms] } 16... Nb5 { [515ms] } 17. Bg6 { [485ms] } 17... Re7
+{ [500ms] } 18. a4 { [828ms] } 18... Nc7 { [515ms] } 19. Qxd6 { [891ms] } 19...
+Re6 { [516ms] } 20. Qc5 { [531ms] } 20... d6 { [500ms] } 21. Qf5 { [515ms] }
+21... Kb8 { [485ms] } 22. Bf7 { [609ms] } 22... Re7 { [500ms] } 23. Qxf6
+{ [531ms] } 23... Red7 { [500ms] } 24. Bb3 { [516ms] } 24... d5 { [515ms] } 25.
+Qxh6 { [516ms] } 25... Rg8 { [500ms] } 26. Qf6 { [516ms] } 26... Rdd8
+{ [515ms] } 27. Qe5 { [500ms] } 27... Rde8 { [516ms] } 28. Qd6 { [515ms] }
+28... Rh8 { [500ms] } 29. b5 { [485ms] } 29... Rd8 { [500ms] } 30. Qe5
+{ [500ms] } 30... Rxh3 { [515ms] } 31. bxc6 { [516ms] } 31... Kc8 { [516ms] }
+32. Qf5+ { [515ms] } 32... Kb8 { [516ms] } 33. Bc2 { [500ms] } 33... b6
+{ [500ms] } 34. Qxg5 { [515ms] } 34... Rdh8 { [485ms] } 35. Qf6 { [500ms] }
+35... Rh2 { [500ms] } 36. Qd6 { [500ms] } 36... d4 { [500ms] } 37. g5
+{ [500ms] } 37... R8h5 { [485ms] } 38. Qd8# { [500ms] } 1-0
