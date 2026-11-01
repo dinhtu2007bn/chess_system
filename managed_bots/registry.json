@@ -111,6 +111,14 @@
       "created_at": "2026-10-30T14:30:00.000000+00:00",
       "is_default": true,
       "description": "Bot Test V3: Khắc phục triệt để lỗi dâng Tốt tự sát phá thành Vua (Castled King Shield Penalty), chuẩn hóa vùng đe dọa Vua (cắt giới hạn 280cp, tránh thí Hậu), phân bổ thời gian thông minh (sàn 0.42s tận dụng delay hệ thống, dồn toàn lực khi dưới ngưỡng tử 0.5s), phục hồi cửa sổ Aspiration và cắt tỉa LMP đạt Depth 6-7."
+    },
+    {
+      "id": "bot_test_2",
+      "name": "Bot Test 2 (Tactical & Time Boost)",
+      "dir_name": "bot_test_2",
+      "created_at": "2026-11-01T14:50:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot Test 2: Nâng cấp Move Ordering ưu tiên nước chiếu chiến thuật (65k điểm), bảng băm O(1) eviction, thời gian co giãn thông minh (Sharp Tactical Boost lên 5.6s khi gặp thế cờ căng thẳng để đạt Depth 7)."
     }
   ]
 }
