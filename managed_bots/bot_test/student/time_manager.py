@@ -106,8 +106,9 @@ def get_time_limits(
     computed_soft = base * complexity * phase_factor
 
     # Dynamic upper cap based on initial time control
-    if initial_s >= 120.0:        # 2m to 6m matches: optimal 2.5s - 3.5s deep search (prevents midgame overspend)
-        max_soft = min(3.5, max(2.0, remaining_s * 0.05))
+    if initial_s >= 120.0:        # 2m to 6m matches: 2.5s - 3.5s normal, up to 5.6s in sharp positions for Depth 7
+        sharp_boost = 1.6 if complexity >= 1.25 else 1.0
+        max_soft = min(3.5 * sharp_boost, max(2.0, remaining_s * 0.05 * sharp_boost))
     elif initial_s >= 50.0:       # 60s - 90s matches: allow 1.2s - 2.0s
         max_soft = min(2.0, remaining_s * 0.08)
     else:                         # 30s blitz matches: keep midgame in check (0.45s - 0.65s)

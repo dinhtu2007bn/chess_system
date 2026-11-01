@@ -550,6 +550,8 @@ class Searcher:
                 s = 80_000
             elif move == k2:
                 s = 70_000
+            elif board.gives_check(move):
+                s = 65_000
             else:
                 s = hist[move.from_square][move.to_square]
             scored.append((-s, i, move))
@@ -566,7 +568,8 @@ class Searcher:
         move: Optional[chess.Move],
     ) -> None:
         if len(self.tt) >= _TT_SIZE and key not in self.tt:
-            old_keys = [k for k, v in list(self.tt.items())[:50] if v[4] != self._age]
-            for k in old_keys:
-                del self.tt[k]
+            try:
+                self.tt.pop(next(iter(self.tt)))
+            except (StopIteration, KeyError):
+                pass
         self.tt[key] = (depth, score, flag, move, self._age)
