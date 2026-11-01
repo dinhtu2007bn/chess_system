@@ -272,7 +272,7 @@ class Searcher:
             depth += 1
 
         if depth <= 0 or ply >= _MAX_PLY - 1:
-            return self._quiescence(board, alpha, beta, ply)
+            return self._quiescence(board, alpha, beta, ply, 0)
 
         is_pv = (beta - alpha) > 1
         orig_alpha = alpha
@@ -423,7 +423,7 @@ class Searcher:
         self._tt_store(key, depth, self._pack_score(best_score, ply), flag, best_move)
         return best_score
 
-    def _quiescence(self, board: chess.Board, alpha: int, beta: int, ply: int) -> int:
+    def _quiescence(self, board: chess.Board, alpha: int, beta: int, ply: int, qs_ply: int = 0) -> int:
         """High-Performance Quiescence search with tactical checks and quiet pawn forks."""
         self.nodes += 1
         if (self.nodes & self._node_mask) == 0:
@@ -436,7 +436,7 @@ class Searcher:
             elif rem <= 0.80:
                 self._node_mask = 63
 
-        if ply >= _MAX_PLY - 1:
+        if ply >= _MAX_PLY - 1 or qs_ply >= 16:
             return self._evaluate(board)
 
         in_check = board.is_check()
@@ -466,7 +466,7 @@ class Searcher:
                     to_rank = m.to_square >> 3 if turn == chess.WHITE else 7 - (m.to_square >> 3)
                     if to_rank >= 6:
                         moves.append(m)
-                    elif ply <= 2 and opp_minors_majors:
+                    elif qs_ply <= 1 and opp_minors_majors:
                         # Pawn fork or pawn attacking enemy heavy piece
                         p_att = chess.BB_PAWN_ATTACKS[turn][m.to_square]
                         if (
@@ -474,7 +474,7 @@ class Searcher:
                             or (p_att & (board.rooks | board.queens) & board.occupied_co[not turn])
                         ):
                             moves.append(m)
-                elif ply <= 1 and board.gives_check(m):
+                elif qs_ply <= 1 and board.gives_check(m):
                     # Shallow quiet check to eliminate back-rank/hanging queen blunders
                     moves.append(m)
 
@@ -515,7 +515,7 @@ class Searcher:
                     continue
 
             board.push(move)
-            score = -self._quiescence(board, -beta, -alpha, ply + 1)
+            score = -self._quiescence(board, -beta, -alpha, ply + 1, qs_ply + 1)
             board.pop()
 
             if score > alpha:

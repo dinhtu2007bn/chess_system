@@ -64,3 +64,4 @@ Sau đó mở trình duyệt truy cập: `http://127.0.0.1:8888`
 4. **Chia sẻ cho người khác xem online:**
    - Khi đang bật `CHAY_HET_THONG.bat`, click đúp file **`CHIA_SE_ONLINE.bat`**.
    - Copy đường link `https://xxxx.trycloudflare.com` gửi cho đồng đội để họ truy cập từ xa.
+
