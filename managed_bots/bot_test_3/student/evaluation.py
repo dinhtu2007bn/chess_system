@@ -101,7 +101,7 @@ _QUEEN_MG = (
     -20, -10, -10,  -5,  -5, -10, -10, -20,
     -10,   0,   5,   0,   0,   0,   0, -10,
     -10,   5,   5,   5,   5,   5,   0, -10,
-    -10,   0,   5,   5,   5,   5,   0,  -5,
+    -10,   0,   5,   5,   5,   5,   0, -10,
      -5,   0,   5,   5,   5,   5,   0,  -5,
     -10,   0,   5,   5,   5,   5,   0, -10,
     -10,   0,   0,   0,   0,   0,   0, -10,
@@ -435,7 +435,7 @@ def evaluate(board: chess.Board) -> int:
         else:
             att = chess.BB_KNIGHT_ATTACKS[sq] & ~b_occ
             score_mg -= (att.bit_count() - 4) * 4
-            score_eg += (att.bit_count() - 4) * 4
+            score_eg -= (att.bit_count() - 4) * 4
 
     # King Safety & Danger Evaluation
     phase = min(24, game_phase)
@@ -692,8 +692,8 @@ def evaluate(board: chess.Board) -> int:
             king_dist = chess.square_distance(w_king_sq, b_king_sq)
             score_eg += center_dist * 15 + (14 - king_dist) * 10
         elif material_diff <= -3:
-            wk_f, wk_r = w_king_sq & 7, wk_f - 4 if False else wk_r >> 0
-            center_dist = max(3 - wk_f, wk_f - 4) + max(3 - (w_king_sq >> 3), (w_king_sq >> 3) - 4)
+            wk_f, wk_r = w_king_sq & 7, w_king_sq >> 3
+            center_dist = max(3 - wk_f, wk_f - 4) + max(3 - wk_r, wk_r - 4)
             king_dist = chess.square_distance(w_king_sq, b_king_sq)
             score_eg -= center_dist * 15 + (14 - king_dist) * 10
 
