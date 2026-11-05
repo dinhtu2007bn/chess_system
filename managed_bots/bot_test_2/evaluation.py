@@ -35,9 +35,9 @@ _DOUBLED_PENALTY = -15
 _ISOLATED_PENALTY = -15
 _BISHOP_PAIR_BONUS = 35
 
-# Exponential Passed Pawn Bonuses (Ensures runaway passed pawns are top priority)
-_PASSED_BONUS_MG = (0, 10, 20, 40, 80, 150, 250)
-_PASSED_BONUS_EG = (0, 20, 40, 80, 180, 350, 700)
+# Rational Passed Pawn Bonuses (Sound values preventing suicidal piece sacrifices)
+_PASSED_BONUS_MG = (0, 8, 16, 30, 55, 95, 150)
+_PASSED_BONUS_EG = (0, 15, 30, 50, 90, 160, 270)
 
 _ROOK_OPEN_FILE = 20
 _ROOK_SEMI_OPEN_FILE = 10
@@ -551,8 +551,7 @@ def evaluate(board: chess.Board) -> int:
                     else:
                         # Promotion square guarded by enemy and unsupported by us!
                         # Strategic Restraint: Do not suicidal sprint; reward tying down defenders
-                        bonus_eg = min(bonus_eg, 140 if r == 5 else 240)
-                        bonus_eg += 80 if r == 5 else 140
+                        bonus_eg = min(bonus_eg, 70 if r == 5 else 120)
 
                 if not enemy_nonpawns_w and r >= 3 and not prom_guarded_by_enemy:
                     tempo = int(board.turn != chess.WHITE)
@@ -603,8 +602,7 @@ def evaluate(board: chess.Board) -> int:
                     else:
                         # Promotion square guarded by enemy and unsupported by us!
                         # Strategic Restraint: Do not suicidal sprint; reward tying down defenders
-                        bonus_eg = min(bonus_eg, 140 if rr == 5 else 240)
-                        bonus_eg += 80 if rr == 5 else 140
+                        bonus_eg = min(bonus_eg, 70 if rr == 5 else 120)
 
                 if not enemy_nonpawns_b and rr >= 3 and not prom_guarded_by_enemy:
                     tempo = int(board.turn != chess.BLACK)

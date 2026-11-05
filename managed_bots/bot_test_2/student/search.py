@@ -550,8 +550,6 @@ class Searcher:
                 s = 80_000
             elif move == k2:
                 s = 70_000
-            elif board.gives_check(move):
-                s = 65_000
             else:
                 s = hist[move.from_square][move.to_square]
             scored.append((-s, i, move))

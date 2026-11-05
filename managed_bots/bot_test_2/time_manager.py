@@ -105,13 +105,16 @@ def get_time_limits(
 
     computed_soft = base * complexity * phase_factor
 
-    # Dynamic upper cap based on initial time control
-    if initial_s >= 120.0:        # 2m to 6m matches: 2.5s - 3.5s normal, up to 5.6s in sharp positions for Depth 7
-        sharp_boost = 1.6 if complexity >= 1.25 else 1.0
-        max_soft = min(3.5 * sharp_boost, max(2.0, remaining_s * 0.05 * sharp_boost))
-    elif initial_s >= 50.0:       # 60s - 90s matches: allow 1.2s - 2.0s
+    # Universal Percentage Dynamic Scaling (180s - 360s, 60s, 30s)
+    # Scales smoothly and continuously with clock without artificial hard caps
+    if initial_s >= 120.0:        # 2m to 6m matches (180s - 360s)
+        # Allows up to 1.7x base in sharp positions (e.g. 7.5s - 9.0s at 300s/360s)
+        sharp_mult = 1.70 if complexity >= 1.25 else 1.45
+        max_soft = min(remaining_s * 0.08, base * sharp_mult)
+        max_soft = max(1.80, max_soft)
+    elif initial_s >= 50.0:       # 60s - 90s matches
         max_soft = min(2.0, remaining_s * 0.08)
-    else:                         # 30s blitz matches: keep midgame in check (0.45s - 0.65s)
+    else:                         # 30s blitz matches
         max_soft = min(0.65, remaining_s * 0.08)
 
     max_soft = max(0.34, max_soft)
@@ -120,10 +123,10 @@ def get_time_limits(
     # Platform charges at least 0.50s per move anyway. Thinking less than 0.34s
     # when clock is healthy wastes calculation depth without saving clock!
     soft_limit = max(0.34, min(max_soft, computed_soft))
-    hard_limit = min(max_soft * 1.40, soft_limit * 1.35)
+    hard_limit = min(soft_limit * 1.40, max(0.38, remaining_s - 0.65))
 
     # Hard ceiling leaves safety margin against remaining clock
-    hard_ceiling = max(0.38, remaining_s - 1.0)
+    hard_ceiling = max(0.38, remaining_s - 0.65)
     hard_limit = min(hard_limit, hard_ceiling)
     soft_limit = min(soft_limit, hard_limit * 0.85)
 
