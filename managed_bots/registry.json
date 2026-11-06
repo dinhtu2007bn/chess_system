@@ -127,6 +127,14 @@
       "created_at": "2026-11-05T18:30:00.000000+00:00",
       "is_default": false,
       "description": "Bot Test 3: Tích hợp Fast SEE (240k/s) phân loại chiếu an toàn (+75k) vs chiếu tự sát (-50k), triệt tiêu hoàn toàn nghịch lý không phong Hậu hàng 7, loại bỏ đòn thí ảo 5.Nxg7, bảo toàn nước chiếu an toàn để cầu hòa/chiếu lặp."
+    },
+    {
+      "id": "Bot_Nh_m_12",
+      "name": "Bot Nhóm 12",
+      "dir_name": "Bot_Nh_m_12",
+      "created_at": "2026-11-06T01:27:01.866553+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 12 tải từ D:/Downloads/student"
     }
   ]
 }
