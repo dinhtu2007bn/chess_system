@@ -198,7 +198,7 @@
       "dir_name": "bot_nhom_5",
       "created_at": "2026-11-07T16:23:11.042412+00:00",
       "is_default": false,
-      "description": "Bot của Nhóm 5 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-05"
+      "description": "Bot Nhóm 5 (Bản nộp chính thức commit 3a6b819): Động cơ Alpha-Beta IDS + TT Cache 250k, Tapered PST Heuristics, Quản lý thời gian Arena Rule MOVE_FLOOR=0.76s."
     },
     {
       "id": "bot_nhom_6",
