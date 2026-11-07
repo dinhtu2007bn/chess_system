@@ -508,12 +508,10 @@ def evaluate(board: chess.Board) -> int:
 
             score_mg += (shelter - danger) * phase // 24
 
-            # Endgame King Safety against Heavy Pieces (Anti-Backrank & Corridor Cutoff)
+            # Endgame King Safety against Heavy Pieces (Anti-Backrank Weakness)
             if b_rooks or b_queens:
                 if (w_king_sq >> 3) == 0 and not (w_occ & board.pawns & chess.BB_RANK_2) and b_rooks:
                     score_eg -= 25
-                if any((sq & 7) == kw_f for sq in b_rooks):
-                    score_eg -= 18
 
         if b_king_sq is not None:
             kb_f, kb_r = b_king_sq & 7, b_king_sq >> 3
@@ -583,12 +581,10 @@ def evaluate(board: chess.Board) -> int:
 
             score_mg -= (shelter - danger) * phase // 24
 
-            # Endgame King Safety against Heavy Pieces (Anti-Backrank & Corridor Cutoff)
+            # Endgame King Safety against Heavy Pieces (Anti-Backrank Weakness)
             if w_rooks or w_queens:
                 if (b_king_sq >> 3) == 7 and not (b_occ & board.pawns & chess.BB_RANK_7) and w_rooks:
                     score_eg += 25
-                if any((sq & 7) == kb_f for sq in w_rooks):
-                    score_eg += 18
 
     # Rational Passed Pawns with Capped Promotion Urgency
     pp_mg = 0
