@@ -167,6 +167,94 @@
       "created_at": "2026-11-07T15:55:28.083051+00:00",
       "is_default": false,
       "description": "Bot V4 Nhóm 12 (Bản nộp chính thức commit a9d4b4b): 1-ply Fast SEE, phân loại Safe Check (+650k) vs Suicidal Check (-500k), né đòn chạy quân bị đe dọa (Evade Threatened Pieces), PST tinh chỉnh, bổ sung Mop-Up cờ tàn và bộ phân bổ thời gian Tactical Delay-Aware Time Manager."
+    },
+    {
+      "id": "bot_nhom_2",
+      "name": "Bot Nhóm 2",
+      "dir_name": "bot_nhom_2",
+      "created_at": "2026-11-07T16:22:53.820285+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 2 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-02"
+    },
+    {
+      "id": "bot_nhom_3",
+      "name": "Bot Nhóm 3",
+      "dir_name": "bot_nhom_3",
+      "created_at": "2026-11-07T16:22:57.738602+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 3 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-03"
+    },
+    {
+      "id": "bot_nhom_4",
+      "name": "Bot Nhóm 4",
+      "dir_name": "bot_nhom_4",
+      "created_at": "2026-11-07T16:23:07.584401+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 4 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-04"
+    },
+    {
+      "id": "bot_nhom_5",
+      "name": "Bot Nhóm 5",
+      "dir_name": "bot_nhom_5",
+      "created_at": "2026-11-07T16:23:11.042412+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 5 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-05"
+    },
+    {
+      "id": "bot_nhom_6",
+      "name": "Bot Nhóm 6",
+      "dir_name": "bot_nhom_6",
+      "created_at": "2026-11-07T16:23:14.223241+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 6 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-06"
+    },
+    {
+      "id": "bot_nhom_7",
+      "name": "Bot Nhóm 7",
+      "dir_name": "bot_nhom_7",
+      "created_at": "2026-11-07T16:23:17.194663+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 7 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-07"
+    },
+    {
+      "id": "bot_nhom_8",
+      "name": "Bot Nhóm 8",
+      "dir_name": "bot_nhom_8",
+      "created_at": "2026-11-07T16:23:19.506548+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 8 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom8"
+    },
+    {
+      "id": "bot_nhom_9",
+      "name": "Bot Nhóm 9",
+      "dir_name": "bot_nhom_9",
+      "created_at": "2026-11-07T16:23:23.433580+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 9 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-09"
+    },
+    {
+      "id": "bot_nhom_10",
+      "name": "Bot Nhóm 10",
+      "dir_name": "bot_nhom_10",
+      "created_at": "2026-11-07T16:23:26.270840+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 10 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-10"
+    },
+    {
+      "id": "bot_nhom_11",
+      "name": "Bot Nhóm 11",
+      "dir_name": "bot_nhom_11",
+      "created_at": "2026-11-07T16:23:31.765913+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 11 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-11"
+    },
+    {
+      "id": "bot_nhom_13",
+      "name": "Bot Nhóm 13",
+      "dir_name": "bot_nhom_13",
+      "created_at": "2026-11-07T16:23:37.281747+00:00",
+      "is_default": false,
+      "description": "Bot của Nhóm 13 tải từ repository chính thức https://github.com/uetlab-ai2014-2/uetlab-ai2014-2-Nhom-13"
     }
   ]
 }
