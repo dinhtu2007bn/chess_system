@@ -151,6 +151,14 @@
       "created_at": "2026-11-06T17:01:18.257159+00:00",
       "is_default": false,
       "description": "Bot Cuối Cùng: Phiên bản hoàn thiện tối hậu kết hợp sức mạnh chiến thuật & tàn cuộc của Bot Test 3 (SEE 240k/s, Passed Pawn Master) với chiến lược quản trị thời gian giữ nhịp Anti-V9 (Trần cứng 2.4s, bảo toàn 45s tàn cuộc) và gia cố an toàn Vua khi còn Xe/Hậu."
+    },
+    {
+      "id": "bot_nhom12_v3",
+      "name": "Bot V3 Nhóm 12 (PeSTO Bitboard & PVS Engine)",
+      "dir_name": "bot_nhom12_v3",
+      "created_at": "2026-11-07T11:49:00.000000+00:00",
+      "is_default": false,
+      "description": "Bot V3 Nhóm 12: Bản hoàn thiện mới nhất từ repo uetlab-ai2014-2-Nhom12. Đóng gói MG/EG 1 số nguyên, PeSTO PST đối xứng Chess960, Kogge-Stone fill cấu trúc Tốt, Quản lý thời gian bù trừ trễ 500-1000ms, PVS + LMR + RFP + NMP."
     }
   ]
 }
