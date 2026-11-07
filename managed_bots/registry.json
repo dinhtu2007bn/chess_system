@@ -159,6 +159,14 @@
       "created_at": "2026-11-07T11:49:00.000000+00:00",
       "is_default": false,
       "description": "Bot V3 Nhóm 12: Bản hoàn thiện mới nhất từ repo uetlab-ai2014-2-Nhom12. Đóng gói MG/EG 1 số nguyên, PeSTO PST đối xứng Chess960, Kogge-Stone fill cấu trúc Tốt, Quản lý thời gian bù trừ trễ 500-1000ms, PVS + LMR + RFP + NMP."
+    },
+    {
+      "id": "bot_nhom12_v4",
+      "name": "Bot V4 Nhóm 12 (Nộp bài chính thức - Tactical Delay-Aware Engine)",
+      "dir_name": "bot_nhom_12_v4",
+      "created_at": "2026-11-07T15:55:28.083051+00:00",
+      "is_default": false,
+      "description": "Bot V4 Nhóm 12 (Bản nộp chính thức commit a9d4b4b): 1-ply Fast SEE, phân loại Safe Check (+650k) vs Suicidal Check (-500k), né đòn chạy quân bị đe dọa (Evade Threatened Pieces), PST tinh chỉnh, bổ sung Mop-Up cờ tàn và bộ phân bổ thời gian Tactical Delay-Aware Time Manager."
     }
   ]
 }
